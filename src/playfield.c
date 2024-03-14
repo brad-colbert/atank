@@ -122,7 +122,7 @@ void init_playfield()
 
     // Load the first map
     #ifdef LOAD_MAP
-    fp = fopen("D:z2.srm", "rb");
+    fp = fopen("D:z2.atm", "rb");
     if(fp != NULL)
     {
         cprintf("\r                         \r%p\n\r", fp);

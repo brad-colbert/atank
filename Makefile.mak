@@ -9,6 +9,7 @@ SRC_DIR=src
 
 DIR2ATR_PATH=C:\Users\bradc\Projects\Atari\tools
 
+CAFLAGS=
 CFLAGS=-Or
 
 .SUFFIXES:
@@ -28,7 +29,7 @@ link_files: $(SRC_DIR)\*.o
     $(CL65) -t $(TARGET) -g -o $(PRODUCT).xex --config $(SRC_DIR)\$(PRODUCT).xex.$(TARGET).cfg --mapfile $(PRODUCT).map -Ln $(PRODUCT).lbl $(**) $(TARGET).lib
 
 .s.o:
-  $(CA65) -t $(TARGET) $(CFLAGS) $<
+  $(CA65) -t $(TARGET) $(CAFLAGS) $<
 
 .c.s:
   $(CC65) -t $(TARGET) $(CFLAGS) $<
@@ -54,12 +55,12 @@ diskdir: $(PRODUCT).xex
     mkdir diskdir
     copy DOS.SYS diskdir\\
     copy $(PRODUCT).xex diskdir\AUTORUN.SYS
-    copy *.atm diskdir\\
+    copy data\maps\*.atm diskdir\\
 
 disk: diskdir
     @echo Building bootable disk
     $(DIR2ATR_PATH)\dir2atr -E -b Dos25 -P atank.atr diskdir
 
 debug: disk
-  Altirra64 /defprofile:xl /ntsc /burstio /fastboot /debug /debugbrkrun /debugcmd: ".loadsym sr.lbl" /disk atank.atr
+  Altirra64 /defprofile:xl /ntsc /burstio /fastboot /debug /debugbrkrun /debugcmd: ".loadsym atank.lbl" /disk atank.atr
 
