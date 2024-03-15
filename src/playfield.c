@@ -88,15 +88,16 @@ void init_playfield()
     next_addr = (u_short)playfield;
     for(i = 0; i < PF_COURSE_ROWS; ++i)
     {
-        address_lut[i] = next_addr;
-
-        next_addr = (u_short)(address_lut[i]) + (u_short)PF_COURSE_COLS;
         over = (next_addr + (u_short)PF_COURSE_COLS) % (u_short)0x1000;  // can't cross 4K boundary
         if(over < (u_short)PF_COURSE_COLS)
         {
             next_addr = (next_addr & (u_short)0xF000) + (u_short)0x1000;
             ++row;  // count the number of 4K overlaps
         }
+
+        address_lut[i] = next_addr;
+
+        next_addr = (u_short)(address_lut[i]) + (u_short)PF_COURSE_COLS;
     }
     cprintf("Row overlaps: %d\n\r", row);
     cgetc();
