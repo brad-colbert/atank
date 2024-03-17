@@ -28,7 +28,7 @@ void init_player_missiles()
     SDMCTL_SAVE = OS.sdmctl;
     OS.sdmctl = OS.sdmctl | DMACTL_PLAYFIELD_NORMAL | DMACTL_DMA_PLAYERS | DMACTL_DMA_MISSILES | DMACTL_DMA_FETCH | PLAYER_LINE_MODE;
     GTIA_WRITE.gractl = 0x03;
-    OS.pcolr0 = GTIA_COLOR_LIGHTRED; //0x3A;  // Red
+    OS.pcolr0 = GTIA_COLOR_RED; //0x3A;  // Red
     OS.pcolr1 = 0x3A;  // Red
     OS.pcolr2 = 0x3A;  // Red
     OS.pcolr3 = 0x3A;  // Red

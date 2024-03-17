@@ -364,7 +364,7 @@ $(DISK): $(PROGRAM)
 #	cp $(PROGRAM) images/* atr
 #	$(DIR2ATR) -d $@ atr
 #	@$(RMDIR) atr
-	cp $(PROGRAM).atr $(DISK)
+#cp $(PROGRAM).atr $(DISK)
 	atr $(DISK) rm AUTORUN.SYS
 	atr $(DISK) put $(PROGRAM) AUTORUN.SYS
 
