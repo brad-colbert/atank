@@ -50,3 +50,20 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Python stuff
+.venv
+
+# Our project stuff
+atr
+test
+temp
+obj
+.vscode
+*.atr
+*.back
+*.xex
+*.lbl
+*.map
+*.SYS
+

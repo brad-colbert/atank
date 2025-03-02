@@ -256,7 +256,8 @@ DISK     = $(PROGRAM).atr
 
 disk: $(DISK)
 
-all: $(PROGRAM) $(DISK)
+#all: $(PROGRAM) $(DISK)
+all: $(PROGRAM)
  
 -include $(DEPENDS)
 -include $(STATEFILE)
@@ -365,8 +366,11 @@ $(DISK): $(PROGRAM)
 #	$(DIR2ATR) -d $@ atr
 #	@$(RMDIR) atr
 #cp $(PROGRAM).atr $(DISK)
-	atr $(DISK) rm AUTORUN.SYS
-	atr $(DISK) put $(PROGRAM) AUTORUN.SYS
+
+#	atr $(DISK) rm AUTORUN.SYS
+#	atr $(DISK) put $(PROGRAM) AUTORUN.SYS
+	atr $(DISK) rm autorun.sys
+	atr $(DISK) put $(PROGRAM) autorun.sys
 
 ###################################################################
 ###  Place your additional targets in the additional Makefiles  ###

@@ -10,7 +10,7 @@ SRC_DIR=src
 DIR2ATR_PATH=C:\Users\bradc\Projects\Atari\tools
 
 CAFLAGS=
-CFLAGS=-Or
+CFLAGS=-g
 
 .SUFFIXES:
 .SUFFIXES: .c .s .o .dat .srm
@@ -26,7 +26,7 @@ s_files: $(SRC_DIR)\*.s
     @$(MAKE) -nologo /f Makefile.mak $(**:.s=.o)
 
 link_files: $(SRC_DIR)\*.o
-    $(CL65) -t $(TARGET) -g -o $(PRODUCT).xex --config $(SRC_DIR)\$(PRODUCT).xex.$(TARGET).cfg --mapfile $(PRODUCT).map -Ln $(PRODUCT).lbl $(**) $(TARGET).lib
+    $(CL65) -t $(TARGET) -g -o $(PRODUCT).xex --config $(SRC_DIR)\atari-xex.cfg --mapfile $(PRODUCT).map -Ln $(PRODUCT).lbl $(**) $(TARGET).lib
 
 .s.o:
   $(CA65) -t $(TARGET) $(CAFLAGS) $<
@@ -40,8 +40,7 @@ link_files: $(SRC_DIR)\*.o
 $(PRODUCT).xex: c_files s_files link_files
 
 clean: s_products c_products
-  del $(PRODUCT).xex $(PRODUCT).map atank.atr
-  rmdir /Q /S diskdir
+  del $(PRODUCT).xex $(PRODUCT).map $(PRODUCT).atr
 
 c_products: $(SRC_DIR)\*.c
     @echo Cleaning $(**:.c=.s)
@@ -52,15 +51,14 @@ s_products: $(SRC_DIR)\*.s
     del $(**:.s=.o)
 
 diskdir: $(PRODUCT).xex
-    mkdir diskdir
     copy DOS.SYS diskdir\\
     copy $(PRODUCT).xex diskdir\AUTORUN.SYS
     copy data\maps\*.atm diskdir\\
 
 disk: diskdir
     @echo Building bootable disk
-    $(DIR2ATR_PATH)\dir2atr -E -b Dos25 -P atank.atr diskdir
+    $(DIR2ATR_PATH)\dir2atr -E -b Dos25 -P $(PRODUCT).atr diskdir
 
 debug: disk
-  Altirra64 /defprofile:xl /ntsc /burstio /fastboot /debug /debugbrkrun /debugcmd: ".loadsym atank.lbl" /disk atank.atr
+  Altirra64 /defprofile:xl /ntsc /burstio /fastboot /debug /debugbrkrun /debugcmd: ".loadsym $(PRODUCT).lbl" /disk $(PRODUCT).atr
 
