@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define TIME (((uint16_t)OS.rtclok[1] << 8) + (uint16_t)OS.rtclok[2])
 #define URL "N:UDP://192.168.1.205:5000"
@@ -22,14 +23,22 @@ typedef struct _sim_packet {
     uint8_t ntsc_flag; // 0 for NTSC, 1 for PAL
     Entity entity;
 } SimPacket;
+typedef struct _update_packet {
+    uint8_t rtclock[4];
+    uint16_t sequence;
+    int16_t x, y;
+} UpdatePacket;
 
 extern int32_t product; // 32-bit product of two 16-bit numbers computed in mul16
 
 SimPacket sim_packet;
+UpdatePacket update_packet;
 
 int main(int argc, char* argv[])
 {
+    uint16_t num_bytes = 0;
     int16_t start_t, end_t, dt;
+    int16_t update_now = 0, update_time = 0, update_dt = 0;
     int8_t dir = 1;
     uint8_t b = 0;
 
@@ -131,6 +140,75 @@ int main(int argc, char* argv[])
         {
             //printf(">%d\n", entity.count);
         }        
+
+        // Send the entity state to the server
+        #define READ_CORRECTION
+        #ifdef READ_CORRECTION
+        num_bytes = network_read_nb(URL, (uint8_t*)&update_packet, sizeof(UpdatePacket));
+        if(num_bytes < sizeof(UpdatePacket))
+        {
+            printf("Unable to read request\n\r");
+        }
+        else
+        {
+            /*
+            server_x = server_players[str((SERVER_IP, SERVER_PORT))]["x"]
+            server_y = server_players[str((SERVER_IP, SERVER_PORT))]["y"]
+
+            # Calculate time since last update
+            now = time.time()
+            dt = now - last_update_time
+
+            # Extrapolate position based on velocity and elapsed time
+            extrapolated_x = server_x + vx * dt
+            extrapolated_y = server_y + vy * dt
+
+            # Correct position if the server state differs significantly
+            if abs(server_x - predicted_pos["x"]) > 2 or abs(server_y - predicted_pos["y"]) > 2:
+                print(f"Correction applied: Server ({server_x}, {server_y}) vs Predicted ({predicted_pos['x']}, {predicted_pos['y']})")
+                x, y = server_x, server_y  # Adjust to server state
+            else:
+                print("Prediction was accurate. Applying extrapolation.")
+                x, y = extrapolated_x, extrapolated_y
+
+            last_update_time = now
+            print(f"Updated position (after extrapolation): ({x:.2f}, {y:.2f})")
+            */
+            int16_t ex_x, ex_y;
+
+            // Calculate time since last update
+            update_now = (int16_t)TIME;
+            update_dt = update_now - update_time;
+            update_dt = update_dt << FIXED_POINT;
+
+            // Extrapolate position based on velocity and elapsed time
+            mul16(sim_packet.entity.vx, update_dt);
+            ex_x = update_packet.x + get_product();
+            mul16(sim_packet.entity.vy, update_dt);
+            ex_y = update_packet.y + get_product();
+
+            // Correct position if the server state differs significantly
+            if(abs(update_packet.x - ex_x) > (7<<FIXED_POINT) || abs(update_packet.y - ex_y) > (7<<FIXED_POINT))
+            {
+                //cprintf("Correction applied: Server (%04X, %04X) vs Predicted (%04X, %04X)\n\r", update_packet.x, update_packet.y, ex_x, ex_y);
+                // cprintf("%04x:%04X-%04X=%04X ", update_dt, update_packet.x, ex_x, update_packet.x - ex_x);
+                //cprintf("%04X-%04X=%04X:%04x ", update_now, update_time, update_dt, abs(update_packet.x - ex_x));
+                //cputs("*");
+                sim_packet.entity.x = update_packet.x;
+                sim_packet.entity.y = update_packet.y;
+            }
+            else
+            {
+                //cprintf("Prediction was accurate. Applying extrapolation.\n\r");
+                //cputs(". ");
+                sim_packet.entity.x = ex_x;
+                sim_packet.entity.y = ex_y;
+            }
+
+            update_time = update_now;
+            //cprintf("Updated position (after extrapolation): (%04X, %04X)\n\r", sim_packet.entity.x, sim_packet.entity.y);
+        }
+        #endif
 
         end_t = (int16_t)TIME;
     }

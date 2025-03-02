@@ -51,30 +51,30 @@ def get_time():
 
 """Returns the current time in jiffy units."""
 def time_jiffy(type: bool) -> int:
-    # NTSC
-    if type:
-        return (int)(time.time() * 59.9227)
     # PAL
-    else:
+    if type:
         return (int)(time.time() * 49.86)
+    # NTSC
+    else:
+        return (int)(time.time() * 59.9227)
     #return (int)(time.time() * 49.86)   # PAL
     #return (int)(time.time() * 59.9227) # NTSC
 
 def jiffy_to_time(jiffy: int, type: bool) -> float:
-    # NTSC
-    if type:
-        return (float)(jiffy / 59.9227)
     # PAL
+    if type:
+        return (float)(jiffy / 49.86)
+    # NTSC
     else:
-        return (float)(jiffy / 49.86)    
+        return (float)(jiffy / 59.9227)
 
 def time_to_jiffy(time: float, type: bool) -> int:
-    # NTSC
-    if type:
-        return (int)(time * 59.9227)
     # PAL
-    else:
+    if type:
         return (int)(time * 49.86)
+    # NTSC
+    else:
+        return (int)(time * 59.9227)
     
 def fixed_point_to_float(fixed_point: int) -> float:
     """Converts a 16-bit signed fixed point number to a floating point number."""
@@ -111,7 +111,7 @@ while True:
         '''
         '''
         # Keep track of time
-        #now = get_time()
+        now = get_time()
 
         # Receive data from a client
         data, addr = server_socket.recvfrom(BUFFER_SIZE)
@@ -127,12 +127,13 @@ while True:
                                   "y": fixed_point_to_float(unpacked_data[5]),
                                   "vx": fixed_point_to_float(unpacked_data[6]),
                                   "vy": fixed_point_to_float(unpacked_data[7])} }            
+        
+        timestamp = jiffy_to_time(sim_packet["rtclock"], sim_packet["ntsc_flag"])
 
-        print(f'Data {player_id}: {sim_packet["entity"]["x"]:.1f},{sim_packet["entity"]["y"]:.1f} - {sim_packet["entity"]["vx"]:.1f},{sim_packet["entity"]["vy"]:.1f}')
+        print(f'Data {player_id}: {sim_packet["entity"]["x"]:.1f},{sim_packet["entity"]["y"]:.1f} - {sim_packet["entity"]["vx"]:.1f},{sim_packet["entity"]["vy"]:.1f} {(now - timestamp):.3f}')
         if sim_packet["msg_type"] == ord('m'):
 
             sequence = sim_packet["sequence"]
-            timestamp = jiffy_to_time(sim_packet["rtclock"], sim_packet["ntsc_flag"])
 
             # Initialize player if first time
             if player_id not in player_data:
@@ -157,11 +158,18 @@ while True:
             player_data[player_id]["last_seq"] = sequence
             player_data[player_id]["last_time"] = timestamp
             print(f"Smoothed {player_id}: {smooth_pos['x']:.1f},{smooth_pos['y']:.1f}")
+            print(f"T: {time_to_jiffy(timestamp, sim_packet['ntsc_flag']):04X} S: {sequence:04X} X: {float_to_fixed_point(smooth_pos['x']):04x}, Y: {float_to_fixed_point(smooth_pos['y']):04x}")
 
             # Broadcast new positions to all players
-            #update_message = json.dumps({"type": "update", "players": player_data})
-            #for client_addr in player_data.keys():
-            #    server_socket.sendto(update_message.encode(), eval(client_addr))
+            '''
+            '''
+            try:
+                for client_addr in player_data.keys():
+                    update_date = struct.pack('I h h h', time_to_jiffy(timestamp, sim_packet["ntsc_flag"]), sequence, float_to_fixed_point(smooth_pos['x']), float_to_fixed_point(smooth_pos['y']))
+                    server_socket.sendto(update_date, eval(client_addr))
+                    print('{!r}'.format(binascii.hexlify(update_date)))
+            except Exception as e:
+                print(f"Error: {e}")
 
         '''
         # Receive data from a client
