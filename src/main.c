@@ -1,229 +1,139 @@
-// Our includes first
-#include "mechanics.h"
-#include "graphics.h"
-#include "playfield.h"
-#include "types.h"
-#include "playfield_utils.h"
-#include "player_missiles.h"
+#include <mul16.h>
 
-// Atari specific includes next
+#include <fujinet-network.h>
+
 #include <atari.h>
-#include <joystick.h>
 #include <conio.h>
 
-// Standard C includes
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 
-#define USE_PLAYERS_DRIVE_SCROLL
-#define DELAY 64
-#define JOY_3 2
-#define JOY_4 3
+#define TIME (((uint16_t)OS.rtclok[1] << 8) + (uint16_t)OS.rtclok[2])
+#define URL "N:UDP://192.168.1.205:5000"
 
-byte joys[4];
+typedef struct _entity {
+    int16_t x, y;
+    int16_t vx, vy;   // velocity in pixel/second (1 second is 60 frames NTSC, 50 frames PAL)
+} Entity;
+typedef struct _sim_packet {
+    uint8_t rtclock[4];
+    uint16_t sequence;
+    uint8_t msg_type;
+    uint8_t ntsc_flag; // 0 for NTSC, 1 for PAL
+    Entity entity;
+} SimPacket;
 
-void read_joysticks()
+extern int32_t product; // 32-bit product of two 16-bit numbers computed in mul16
+
+SimPacket sim_packet;
+
+int main(int argc, char* argv[])
 {
-    switch(num_players)
+    int16_t start_t, end_t, dt;
+    int8_t dir = 1;
+    uint8_t b = 0;
+
+    sim_packet.ntsc_flag = get_tv();
+    sim_packet.entity.x = 0x0000;
+    sim_packet.entity.y = 0x0000;
+    sim_packet.entity.vx = (int16_t)3 << (FIXED_POINT-1);   // 1 pix per frame
+    sim_packet.entity.vy = 0x0000;
+
+    OS.rtclok[2] = 0;
+    OS.rtclok[1] = 0;
+    OS.rtclok[0] = 0;
+
+    printf("Starting the test client\n");
+
+    if(FN_ERR_OK != network_init())
     {
-        case 4:
-            joys[3] = joy_read(JOY_4);
-        case 3:
-            joys[2] = joy_read(JOY_3);
-        case 2:
-            joys[1] = joy_read(JOY_2);
-        default:
-            joys[0] = joy_read(JOY_1);
+        printf("Failed to initialize network\n\r");
+        return 0x0;
     }
-}
 
-int main()
-{
-    #ifdef USE_PLAYERS_DRIVE_SCROLL
-    u_short delay;
-
-    // Debug pause
-    cprintf("\rHit Key\r");
-    cgetc();  // Pause
-    cprintf("         ");
-
-    // Initialize the components
-    init_playfield();
-    init_graphics();
-    init_player_missiles();
-    joy_install(joy_static_stddrv);
-
-    // Make sure the playfield is initialized
-    set_playfield_viewport(0, 0);
-
-    // Set the number of players (will be done on the opening screen)
-    num_players = 1;
-
-    // Initial joystick read
-    read_joysticks();
-
-    while(!JOY_BTN_1(joys[0]))
+    if(FN_ERR_OK != network_open(URL, 22, 0))
     {
-        byte idx;
-        for(idx = 0; idx < num_players; ++idx)
+        printf("Failed to open URL\n\r");
+        return 0x0;
+    }
+        
+    start_t = 0;
+    end_t = 0;
+    dt = 0;
+    while(1)
+    {
+        dt = end_t - start_t;
+        dt = dt << FIXED_POINT;  // convert to current fixed-point format
+        //cprintf("%u:", start_t);
+        start_t = (int16_t)TIME;
+
+        sim_packet.msg_type = 'm';
+        sim_packet.rtclock[0] = OS.rtclok[2];
+        sim_packet.rtclock[1] = OS.rtclok[1];
+        sim_packet.rtclock[2] = OS.rtclok[0];
+        sim_packet.rtclock[3] = 0;
+        ++sim_packet.sequence;
+
+        // cprintf("x:");
+        // print_fixed(sim_packet.entity.x);
+        // cprintf("+");
+        // print_fixed(sim_packet.entity.vx);
+        // cprintf("*");
+        // print_fixed(dt);
+        // cprintf("=");
+        mul16(sim_packet.entity.vx, dt);
+        sim_packet.entity.x = sim_packet.entity.x + get_product();
+        // print_fixed(sim_packet.entity.x);
+        // cprintf("   \r\n");
+
+        // cprintf("y:");
+        // print_fixed(sim_packet.entity.y);
+        // cprintf("+");
+        // print_fixed(sim_packet.entity.vy);
+        // cprintf("*");
+        // print_fixed(dt);
+        // cprintf("=");
+        mul16(sim_packet.entity.vy, dt);
+        sim_packet.entity.y = sim_packet.entity.y + get_product();
+        // print_fixed(sim_packet.entity.y);
+        // cprintf("   \r\n");
+
+        // 0x7FF0
+        #define VALUE_THRESH 0x7D00
+        if(sim_packet.entity.x > VALUE_THRESH)
         {
-            byte joy = joys[idx];
-            if (JOY_UP(joys[idx])){
-                if(players.all[idx].y > PF_MIN_Y)
-                {
-                    --players.all[idx].y;
-                    players.all[idx].dirty = 1;
-                }
-            }
-            else if (JOY_DOWN(joys[idx])){
-                //if(players.all[idx].y < (PF_LINES - PF_LINES_PER_PAGE - (255-PF_MAX_Y))-1)
-                if(players.all[idx].y < PF_LINES + PLAYFIELD_PLAYER_EDGE_Y) // + PF_LINES_PER_PAGE)
-                {
-                    ++players.all[idx].y;
-                    players.all[idx].dirty = 1;
-                }
-            }
-            if (JOY_LEFT(joys[idx])) {
-                if(players.all[idx].x > PF_MIN_X)
-                {
-                    --players.all[idx].x;
-                    players.all[idx].dirty = 1;
-                }
-            }
-            else if (JOY_RIGHT(joys[idx])) {
-                // *** Why 32!? **
-                // On display list instructions with the horizontal scrolling bit set, ANTIC automatically expands
-                // its screen memory use to the next larger playfield size, unless it is already using a wide playfield.
-                // Scrolling with a 32 byte narrow playfield will cause ANTIC to read memory as if it were using a
-                // normal 40 byte playfield, and scrolling a normal playfield will be processed as if
-                // it were a wide 48 byte playfield.
-                // https://playermissile.com/scrolling_tutorial/index.html#interlude-wide-and-narrow-playfields
-                if(players.all[idx].x < (PF_COLS+PLAYFIELD_PLAYER_EDGE_X)) // + PF_COLS_PER_PAGE)
-                {
-                    ++players.all[idx].x;
-                    players.all[idx].dirty = 1;
-                }
-            }
+            sim_packet.entity.x = VALUE_THRESH;
+            sim_packet.entity.vy = sim_packet.entity.vx;
+            sim_packet.entity.vx = 0;
+        }
+        else if(sim_packet.entity.y > VALUE_THRESH){
+            sim_packet.entity.y = VALUE_THRESH;
+            sim_packet.entity.vx = -sim_packet.entity.vy;
+            sim_packet.entity.vy = 0;
+        }
+        else if(sim_packet.entity.x < 0x0000){
+            sim_packet.entity.x = 0x0000;
+            sim_packet.entity.vy = sim_packet.entity.vx;
+            sim_packet.entity.vx = 0;
+        }
+        else if(sim_packet.entity.y < 0x0000){
+            sim_packet.entity.y = 0x0000;
+            sim_packet.entity.vx = -sim_packet.entity.vy;
+            sim_packet.entity.vy = 0;
         }
 
-        update_player_missiles();
-        update_playfield_using_players();
+        // Send the entity state to the server
+        if(FN_ERR_OK != network_write(URL, (uint8_t*)&sim_packet, sizeof(SimPacket)))
+        {
+            printf("Unable to write request\n\r");
+        }
+        else
+        {
+            //printf(">%d\n", entity.count);
+        }        
 
-        //for(delay = 0; delay < DELAY; ++delay);
-
-        read_joysticks();
+        end_t = (int16_t)TIME;
     }
-
-    #endif //USE_PLAYERS_DRIVE_SCROLL
-
-    #ifdef USE_JOYSTICK
-
-    byte joy;
-    u_short delay;
-    u_short x, y;
-
-    cprintf("Hit Key");
-    cgetc();  // Pause
-
-    init_graphics();
-    init_playfield();
-    init_player_missiles();
-
-    num_players = 1;
-
-    y = x = 0;
-
-    joy_install(joy_static_stddrv);
-
-    joy = joy_read(JOY_1);
-    while (!JOY_BTN_1(joy))
-    {
-        if (JOY_UP(joy)){
-            if(y > 0)
-                --y;
-        }
-        else if (JOY_DOWN(joy)){
-            if(y < (PF_LINES - PF_LINES_PER_PAGE)-1)
-                ++y;
-        }
-
-        if (JOY_LEFT(joy)) {
-            if(x > 0)
-                --x;
-        }
-        else if (JOY_RIGHT(joy)) {
-            if(x < (PF_COLS - PF_COLS_PER_PAGE)-1)
-                ++x;
-        }
-
-        set_player_position(0, (byte)x, (byte)y);
-        update_player_missiles();
-        scroll_playfield((u_short)x, (u_short)y);
-
-        for(delay = 0; delay < DELAY; ++delay);
-
-        joy = joy_read(JOY_1);
-    }
-
-    joy_uninstall();
-
-    #endif // USE_JOYSTICK
-
-    #ifdef USE_BOUNCE_TEST
-    u_short line_d, col_d;
-    byte bounce_count = 0;
-
-    u_short delay;
-    u_short x, y;
-
-    cprintf("Hit Key");
-    cgetc();  // Pause
-
-    init_graphics();
-    init_playfield();
-
-    line_d = col_d = 0;
-
-    while (bounce_count < 100) // One hundred bounces
-    {
-        scroll_playfield(line, col);
-        //cprintf("%d %d ", line, col);
-        //cprintf("%d %d\n\r", line_d, col_d);
-
-        // Update line and col
-        line += line_d;
-        col  += col_d;
-
-        // Bounce
-        if(line == (PF_LINES - PF_LINES_PER_PAGE)-1) {
-            line_d = -1;
-            ++bounce_count;
-        }
-        else if(line <= 0) {
-            line_d = 1;
-            ++bounce_count;
-        }
-
-        if(col == (PF_COLS - PF_COLS_PER_PAGE)-1) {
-            col_d = -1;
-            ++bounce_count;
-        }
-        else if(col <= 0) {
-            col_d = 1;
-            ++bounce_count;
-        }
-        for(delay = 0; delay < DELAY; ++delay);
-        //sleep(1);
-    }
-
-    #endif // USE_BOUNCE_TEST
-
-    close_player_missiles();
-    close_graphics();
-
-    cprintf("Hit Key To Close");
-    cgetc();  // Pause
 
     return 0;
 }

@@ -45,6 +45,8 @@ void init_player_missiles()
         players.all[idx].dirty = 0;      // True when state changes and must be updated.
         players.all[idx].x = PF_MIN_X;
         players.all[idx].y = PF_MIN_Y;
+        players.all[idx].vx = 0x0000;
+        players.all[idx].vy = 0x0000;
         players.all[idx].image_idx = 0;
         players.all[idx].anim_dir = 1;
     }
@@ -119,9 +121,9 @@ void update_player_missiles()
             byte x, y;
             short screen_x, screen_y;
 
-            // Only draw it on the screen.
-            screen_x = (short)player->x - vp_ul.x;
-            screen_y = (short)player->y - vp_ul.y;
+            // Only draw it on the screen.  ** shift by 4 temporary **
+            screen_x = (short)(player->x>>4) - vp_ul.x;
+            screen_y = (short)(player->y>>4) - vp_ul.y;
 
             if(screen_x > PF_MAX_X)
                 x = PF_MAX_X;

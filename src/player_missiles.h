@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+#include <stdint.h>
+
 #define PMG_SINGLE_LINE
 #define PLAYER_WIDTH 8
 #ifdef PMG_SINGLE_LINE
@@ -32,6 +34,7 @@ typedef struct
 {
     byte dirty;
     u_short x, y;  // absolute position relative to the playfield
+    int16_t vx, vy;   // velocity in pixel/second (1 second is 60 frames NTSC, 50 frames PAL)
     char image_idx, anim_dir;
     byte image_time;
 } Player;
