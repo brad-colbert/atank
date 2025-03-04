@@ -32,7 +32,11 @@ Each client (a player’s 6502-based computer) is responsible for:
 - Clients operate as **thin clients**, meaning the server has authority over all game mechanics, reducing the risk of desynchronization or cheating.
 This architecture ensures that even with the limitations of 6502-based hardware, the game remains fluid and responsive, with the server handling most of the computationally expensive tasks while clients focus on smooth rendering and player interaction.
 
-...
+### Status
+2025/03/04
+This is all test code right now. The main branch contains a test rendering implementatio that is exploring ANTIC 4 colored text mode. The maps, for which, are created using this https://forums.atariage.com/topic/330711-new-antic-mode-4-charactersetscreentileset-designtool-for-windows-and-mac/
+There is another branch, tgi, that is exploring the ise of CC65 tgi drawing library.  This would use the shape drawing utilities and transform the verticies using some simple translation maths.
+The branch multiplayer is exploring and working out the networking communication code.
 
 ### References
 **XTank** (https://github.com/lidl/xtank)  \
