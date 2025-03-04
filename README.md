@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/f503f1a6-baa2-4f9d-b0d1-b4644e7ae84c)
+\
 *ATank* is a multiplayer (networked), overhead view, tank battle game inspired by XTank.
 
 ### Overview
@@ -33,7 +35,8 @@ This architecture ensures that even with the limitations of 6502-based hardware,
 ...
 
 ### References
-**XTank** (https://github.com/lidl/xtank)
+**XTank** (https://github.com/lidl/xtank)  \
+\
 Below are some screenshots from XTank.  Pasted here for reference for developers.
 ## XTank Intro Screen
 ![image](https://github.com/user-attachments/assets/24b5e593-c668-4570-af53-64c8fae8151c)
