@@ -1,4 +1,5 @@
 #include <mul16.h>
+#include <sync_time.h>
 
 #include <fujinet-network.h>
 
@@ -10,15 +11,16 @@
 #include <stdlib.h>
 
 #define TIME (((uint16_t)OS.rtclok[1] << 8) + (uint16_t)OS.rtclok[2])
-#define URL "N:UDP://192.168.1.205:5000"
+//#define URL "N:UDP://192.168.1.205:5000"
+#define URL "N:UDP://localhost:5000"
 
 typedef struct _entity {
+    uint16_t sequence;
     int16_t x, y;
     int16_t vx, vy;   // velocity in pixel/second (1 second is 60 frames NTSC, 50 frames PAL)
 } Entity;
 typedef struct _sim_packet {
     uint8_t rtclock[4];
-    uint16_t sequence;
     uint8_t msg_type;
     uint8_t ntsc_flag; // 0 for NTSC, 1 for PAL
     Entity entity;
@@ -42,12 +44,6 @@ int main(int argc, char* argv[])
     int8_t dir = 1;
     uint8_t b = 0;
 
-    sim_packet.ntsc_flag = get_tv();
-    sim_packet.entity.x = 0x0000;
-    sim_packet.entity.y = 0x0000;
-    sim_packet.entity.vx = (int16_t)3 << (FIXED_POINT-1);   // 1 pix per frame
-    sim_packet.entity.vy = 0x0000;
-
     OS.rtclok[2] = 0;
     OS.rtclok[1] = 0;
     OS.rtclok[0] = 0;
@@ -65,7 +61,18 @@ int main(int argc, char* argv[])
         printf("Failed to open URL\n\r");
         return 0x0;
     }
-        
+
+    // Make sure our clock is as close as possible to the server clock
+    sync_time(URL);
+
+    // Initialize the entity
+    sim_packet.ntsc_flag = get_tv();
+    sim_packet.entity.x = 0x0000;
+    sim_packet.entity.y = 0x0000;
+    sim_packet.entity.vx = (int16_t)3 << (FIXED_POINT-1);   // 1 pix per frame
+    sim_packet.entity.vy = 0x0000;
+    
+    // Start the tight loop
     start_t = 0;
     end_t = 0;
     dt = 0;
@@ -81,7 +88,7 @@ int main(int argc, char* argv[])
         sim_packet.rtclock[1] = OS.rtclok[1];
         sim_packet.rtclock[2] = OS.rtclok[0];
         sim_packet.rtclock[3] = 0;
-        ++sim_packet.sequence;
+        ++sim_packet.entity.sequence;
 
         // cprintf("x:");
         // print_fixed(sim_packet.entity.x);
@@ -151,29 +158,6 @@ int main(int argc, char* argv[])
         }
         else
         {
-            /*
-            server_x = server_players[str((SERVER_IP, SERVER_PORT))]["x"]
-            server_y = server_players[str((SERVER_IP, SERVER_PORT))]["y"]
-
-            # Calculate time since last update
-            now = time.time()
-            dt = now - last_update_time
-
-            # Extrapolate position based on velocity and elapsed time
-            extrapolated_x = server_x + vx * dt
-            extrapolated_y = server_y + vy * dt
-
-            # Correct position if the server state differs significantly
-            if abs(server_x - predicted_pos["x"]) > 2 or abs(server_y - predicted_pos["y"]) > 2:
-                print(f"Correction applied: Server ({server_x}, {server_y}) vs Predicted ({predicted_pos['x']}, {predicted_pos['y']})")
-                x, y = server_x, server_y  # Adjust to server state
-            else:
-                print("Prediction was accurate. Applying extrapolation.")
-                x, y = extrapolated_x, extrapolated_y
-
-            last_update_time = now
-            print(f"Updated position (after extrapolation): ({x:.2f}, {y:.2f})")
-            */
             int16_t ex_x, ex_y;
 
             // Calculate time since last update
