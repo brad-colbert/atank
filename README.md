@@ -9,6 +9,12 @@ Every opponent you face is another human player, each piloting a custom-designed
 
 The game pushes the limits of its hardware to maintain smooth, real-time combat between multiple players. While customization is more constrained than in modern games, players can still tweak tank attributes and battlefield layouts, ensuring each match remains fresh and unpredictable. Whether fighting in chaotic free-for-alls or structured team battles, every game is a fast-paced test of skill, adaptability, and tactical thinking.
 
+### Status
+2025/03/04\
+- This is all test code right now. The main branch contains a test rendering implementatio that is exploring ANTIC 4 colored text mode. The maps, for which, are created using this https://forums.atariage.com/topic/330711-new-antic-mode-4-charactersetscreentileset-designtool-for-windows-and-mac/
+- There is another branch, tgi, that is exploring the ise of CC65 tgi drawing library.  This would use the shape drawing utilities and transform the verticies using some simple translation maths.
+- The branch multiplayer is exploring and working out the networking communication code.
+
 ### Game Architecture Overview
 The game follows a **client-server architecture**, where multiple clients (player-controlled tanks running on 6502-based computers) connect to a central **server** that manages game state and synchronization. This setup ensures smooth multiplayer gameplay while minimizing computational demands on the resource-limited clients.
 
@@ -31,12 +37,6 @@ Each client (a player’s 6502-based computer) is responsible for:
 - The game operates on a **low-bandwidth model**, with clients sending only essential input data to the server and receiving compact updates in return.
 - Clients operate as **thin clients**, meaning the server has authority over all game mechanics, reducing the risk of desynchronization or cheating.
 This architecture ensures that even with the limitations of 6502-based hardware, the game remains fluid and responsive, with the server handling most of the computationally expensive tasks while clients focus on smooth rendering and player interaction.
-
-### Status
-2025/03/04
-This is all test code right now. The main branch contains a test rendering implementatio that is exploring ANTIC 4 colored text mode. The maps, for which, are created using this https://forums.atariage.com/topic/330711-new-antic-mode-4-charactersetscreentileset-designtool-for-windows-and-mac/
-There is another branch, tgi, that is exploring the ise of CC65 tgi drawing library.  This would use the shape drawing utilities and transform the verticies using some simple translation maths.
-The branch multiplayer is exploring and working out the networking communication code.
 
 ### References
 **XTank** (https://github.com/lidl/xtank)  \
