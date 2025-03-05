@@ -11,7 +11,7 @@ The game pushes the limits of its hardware to maintain smooth, real-time combat 
 
 ### Status
 2025/03/04\
-- This is all test code right now. The main branch contains a test rendering implementatio that is exploring ANTIC 4 colored text mode. The maps, for which, are created using this https://forums.atariage.com/topic/330711-new-antic-mode-4-charactersetscreentileset-designtool-for-windows-and-mac/
+- This is all test code right now. The main branch contains a test rendering implementation that is exploring ANTIC 4 colored text mode. The maps are created using this https://forums.atariage.com/topic/330711-new-antic-mode-4-charactersetscreentileset-designtool-for-windows-and-mac/
 - There is another branch, tgi, that is exploring the ise of CC65 tgi drawing library.  This would use the shape drawing utilities and transform the verticies using some simple translation maths.
 - The branch multiplayer is exploring and working out the networking communication code.
 
