@@ -47,6 +47,10 @@ void init_graphics()
     ORG_COLOR1 = OS.color1;
     ORG_COLOR2 = OS.color2;
 
+    // Set the graphics color and mode
+    OS.color1 = 14;         // Color maximum luminance
+    OS.color2 = 0;          // Background black
+
     OS.sdlst = &graphics_8_dl;
 
     // Initilize the framebuffer address LUTs

@@ -38,72 +38,46 @@ int main(void)
 {
     uint16_t t_avg, count = 2;
 
-    const uint16_t x1 = 0;
-    const uint16_t y1 = 0;
-    const uint16_t x2 = 100;
-    const uint16_t y2 = 0;
-    uint16_t idx_x = 0; //idx_y;
-    uint16_t offset;
-    uint16_t address;
-    //uint8_t b;
+    uint16_t x1 = 0;
+    uint16_t y1 = 0;
+    uint16_t x2 = 100;
+    uint16_t y2 = 0;
+    uint16_t idx = 0; //idx_y;
 
     // Load the map
     uint8_t lineCount;
     loadMap("map.txt", &lineCount);
 
-    //cgetc();
-
     init_graphics();
-    //cgetc();
+
     clear_graphics();
+
+    cgetc();
 
     /* Do graphics stuff */
     TIME_RESET;
-    #if 0
-    // tgi_setcolor(COLOR_WHITE);
-    //while(!kbhit()) {
-    //    ++count;
-    for(; count < 320; ++count) {
 
-        setPixel(framebuffer + 0x1000); //, 0);
-
-        // Check for horizontal line
-        if (y1 == y2) {
-            for (idx_y = x1; idx_y <= x2; ++idx_y) {
-                //offset = idx_y * WIDTH + (uint16_t)10;
-                //if(idx_y < 102)
-                //    address = &(framebuffer[offset/8]);
-                //else
-                //    address = &(framebuffer[(offset/8)+16]);
-                // XOR the pixel at (x, y1)
-                // Assuming a function setPixel(x, y) that sets the pixel at (x, y)
-                //printf("h:%d,%d,%d,%d\n", idx_y, offset, offset/8, offset%8);
-                //setPixel(address); //, (uint8_t)(offset%8)); // Replace with actual pixel manipulation code
-
-                setPixelXY(count, (uint8_t)idx_y); // Replace with actual pixel manipulation code
-            }
-        }
+    // Vertical lines going across.
+    x1 = 0;
+    y1 = 1;
+    x2 = 0;
+    y2 = 190;
     
-        //cgetc();
+    for(idx = 0; idx < 320; idx+=10) {
+        XORLineC(x1+idx, y1, x2+idx, y2);
+        count++;
     }
-    #else
-    cgetc();
-    //b = (uint8_t)(x1 % 8); // Get the bit position of the first pixel
-    for(idx_x = 0; idx_x < 192; ++idx_x) {
-        //for(count = 0; count < 8; ++count) {
-            XORLineC(x1+idx_x, count+idx_x, x2+idx_x, count+idx_x);
-            #if 0
-            // Write the left most pixel
-            setPixelXYmask((uint8_t)(x1/8), (uint8_t)y1, b+(b-1));
-            for(idx_y = (x1/8)+1; idx_y < (x2/8); ++idx_y) {
-                setPixelXYmask((uint8_t)idx_y, (uint8_t)count, 0xFF); // Replace with actual pixel manipulation code
-            }
-            // Write the right most pixel FF-(2^bit-1)
-            setPixelXYmask((uint8_t)(x2/8), (uint8_t)y1, 0xFF-(b-1));
-            #endif
-        //}
+    
+    // Horizontal lines going down.
+    x1 = 1;
+    y1 = 0;
+    x2 = 126;
+    y2 = 0;
+
+    for(idx = 0; idx < 192; ++idx) {
+        XORLineC(x1+idx, y1+idx, x2+idx, y2+idx);
+        count++;
     }
-    #endif
 
     t_avg = TIME/count;
 

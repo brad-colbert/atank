@@ -16,22 +16,11 @@ extern uint8_t framebuffer[7696]; // Assume framebuffer is defined elsewhere
 void cohen_sutherland(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
 {
     // Cohen-Sutherland algorithm implementation
-    
 }
 
 // Function to set a pixel at (x, y)
 void setPixelC(uint16_t x, uint8_t y)
 {
-    // Calculate the byte index and bit position
-    //uint16_t byteIndex = (y * (uint16_t)WIDTH_BYTES + x);
-    //uint8_t bitPosition = (uint8_t)((y * (uint16_t)WIDTH + x) % (uint16_t)8);
-    // Toggle the pixel in the framebuffer
-    //(uint8_t)framebuffer[0] = (uint8_t)0xFF; //^= bitmask[bitPosition];
-    //*(uint8_t *)0x5000 = 0xFF;
-    //uint16_t offset = y * WIDTH + x;
-    //setPixel(oft, b);
-    //setPixel(oft);
-    //printf("setPixelC(%d, %d)\n", oft, b);
     setPixelXY(x, y);
 }
 
@@ -73,10 +62,6 @@ void XORLineC(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
     // Check for vertical line
     else if (x1 == x2) {
         for (idx_y = y1; idx_y <= y2; ++idx_y) {
-            // XOR the pixel at (x1, y)
-            // Assuming a function setPixel(x, y) that sets the pixel at (x, y)
-            //offset = idx_y * WIDTH + x1;
-            //setPixelC(offset); // Replace with actual pixel manipulation code
             setPixelC(x1, (uint8_t)idx_y); // Replace with actual pixel manipulation code
         }
     }/*
