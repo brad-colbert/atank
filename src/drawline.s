@@ -46,6 +46,9 @@ XX:      .res 2
 YY:      .res 1
 BMIDX:   .res 1
 
+.data
+LM_TABLE: .byte $FF, $7F, $3F, $1F, $0F, $07, $03, $01
+RM_TABLE: .byte $80, $C0, $E0, $F0, $F8, $FC, $FE, $FF
 
 .code
 
@@ -58,18 +61,8 @@ BMIDX:   .res 1
 ; This will calculate a mask for the left most byte of the line.
 ; A should contain the bit index of the starting pixel.
 .proc _calcLeftMask
-    STA BMIDX                ; Store the bit (pixel location) number to BMIDX
-    LDA #07                  ; Set A to 7.  We will subtract the bit index from this to get the amount to shift.
-    SEC                      ; Set the carry flag so that the SBC will properly subtract
-    SBC BMIDX                ; Subtract the bit index from 7 to get the amount to shift
-    TAX                      ; Transfer A (the amount to shift) to X
-    LDA #00                  ; Initialize A
-    INX                      ; Increment X to get the bitmask for the right most pixel
-rotate_bit_to_left:
-    SEC                      ; Set the carry flag so that the ROL will fill the bits.
-    ROL A                    ; Shift the bit in A to the left
-    DEX                      ; Decrement the amount to shift
-    BNE rotate_bit_to_left   ; If not done, loop
+    TAX
+    LDA LM_TABLE,X
 
     RTS
 .endproc
@@ -77,14 +70,8 @@ rotate_bit_to_left:
 ; This will calculate a mask for the right most byte of the line.
 ; A should contain the bit index of the starting pixel.
 .proc _calcRightMask
-    TAX                      ; Transfer A to X
-    LDA #00                  ; Initialize A
-    INX                      ; Increment X to get the bitmask for the right most pixel
-rotate_bit_to_right:
-    SEC                      ; Set the carry flag so that the ROR will fill the bits.
-    ROR A                    ; Shift the bit in A to the right
-    DEX
-    BNE rotate_bit_to_right   ; If not done, loop
+    TAX
+    LDA RM_TABLE,X
 
     RTS
 .endproc
@@ -117,9 +104,12 @@ rotate_bit_to_right:
     CLC
     ADC XX
     STA FBLINE
-    LDA FBLINE+1
-    ADC #00
-    STA FBLINE+1
+    ;LDA FBLINE+1
+    ;ADC #00
+    ;STA FBLINE+1
+    bcc :+
+    inc FBLINE+1
+:
 
     LDA BMIDX                ; Get the bitmask from the temp store
     LDY #00                  ; Set Y to 0 for no offset
@@ -158,9 +148,12 @@ rotate_bit_to_right:
     CLC
     ADC XX
     STA FBLINE
-    LDA FBLINE+1
-    ADC XX+1
-    STA FBLINE+1
+    ;LDA FBLINE+1
+    ;ADC XX+1
+    ;STA FBLINE+1
+    bcc :+
+    inc FBLINE+1
+:
 
     ldy BMIDX
     lda BitMasks,y
@@ -202,6 +195,7 @@ rotate_bit_to_right:
     rts
 .endproc
 
+; Currently NOT Being Used
 .proc _XORLine
     ; Pull arguments from the stack (CC65 calling convention)
     jsr popa

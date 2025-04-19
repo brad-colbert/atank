@@ -12,7 +12,8 @@
 
 #define EOFx 0xFF
 
-Line lines[64];
+#define MAX_LINES 64
+Line lines[MAX_LINES];
 
 char* readLine(FILE* file, char* buffer, int maxBytes) {
     int i = 0;
@@ -43,7 +44,7 @@ void loadMap(const char* filename, uint8_t* lineCount) {
 
     (*lineCount) = 0;
 
-     while (readLine(file, line, sizeof(line))) {
+     while (readLine(file, line, sizeof(line)) && *lineCount < MAX_LINES) {
         char shape;
         int16_t x1, y1, x2, y2;
         
@@ -59,14 +60,23 @@ void loadMap(const char* filename, uint8_t* lineCount) {
                 break;
                 case 'S':
                     // Convert square to four lines
-                    setLine(&lines[(*lineCount)++], x1, y1, x1, y1 + y2);
-                    setLine(&lines[(*lineCount)++], x1, y1 + y2, x1 + x2, y1 + y2);
-                    setLine(&lines[(*lineCount)++], x1 + x2, y1 + y2, x1 + x2, y1);
-                    setLine(&lines[(*lineCount)++], x1 + x2, y1, x1, y1);
+                    setLine(&lines[(*lineCount)++], x1, y1, x2, y1);
+                    setLine(&lines[(*lineCount)++], x2, y1, x2, y2);
+                    setLine(&lines[(*lineCount)++], x1, y1, x1, y2);
+                    setLine(&lines[(*lineCount)++], x1, y2, x2, y2);
+                break;
+                default:
                 break;
             }
         }
     }
 
     fclose(file);
+}
+
+void drawMap(uint8_t lineCount) {
+    uint8_t i;
+    for (i = 0; i < lineCount; ++i) {
+        drawLine(&lines[i]);
+    }
 }

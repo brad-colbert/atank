@@ -121,3 +121,34 @@ void XORLineC(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
     }
     #endif
 }
+
+void drawLineB(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2)
+{
+    uint8_t b, idx;
+
+    // Check for horizontal line
+    if (y1 == y2) {
+        // We get to use a serious optimization here.  We get to write full bytes at a time.
+        // Thus, cutting down the amount of writes by a factor of 8.
+
+        // Write the left most pixel 2^bit+(2^bit-1)
+        b = (uint8_t)(x1 & 0x07); // Get the bit position of the first pixel
+        b = calcLeftMask(b);
+        setPixelXYmask(x1, y1, b);
+
+        for (idx = x1+1; idx < x2; ++idx) {
+            setPixelXYmask(idx, y1, 0xFF);
+        }
+
+        // Write the right most pixel
+        b = (uint8_t)(x2 & 0x07); // Get the bit position of the first pixel
+        b = calcRightMask(b);
+        setPixelXYmask(x2, y1, b);
+    }
+    // Check for vertical line
+    else if (x1 == x2) {
+        for (idx = y1; idx <= y2; ++idx) {
+            setPixelC(x1, idx); // Replace with actual pixel manipulation code
+        }
+    }
+}
