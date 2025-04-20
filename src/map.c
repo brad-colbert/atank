@@ -12,7 +12,8 @@
 
 #define EOFx 0xFF
 
-#define MAX_LINES 64
+// 32 lines => 64 coordinates => 256 bytes
+#define MAX_LINES 32
 Line lines[MAX_LINES];
 
 char* readLine(FILE* file, char* buffer, int maxBytes) {
@@ -32,7 +33,7 @@ char* readLine(FILE* file, char* buffer, int maxBytes) {
 void loadMap(const char* filename, uint8_t* lineCount) {
     FILE* file;
     //int capacity = 10;
-    char line[128];
+    char buff[128];
     //cprintf("Loading map from file: %s\n\r", filename);
 
     file = fopen(filename, "r");
@@ -44,13 +45,13 @@ void loadMap(const char* filename, uint8_t* lineCount) {
 
     (*lineCount) = 0;
 
-     while (readLine(file, line, sizeof(line)) && *lineCount < MAX_LINES) {
+     while (readLine(file, buff, sizeof(buff)) && *lineCount < MAX_LINES) {
         char shape;
         int16_t x1, y1, x2, y2;
         
         //printf("line: %d %s", strlen(line), line);
         //printf("\n");
-        if (sscanf(line, " %c %d,%d %d,%d", &shape, &x1, &y1, &x2, &y2) == 5) {
+        if (sscanf(buff, " %c %d,%d %d,%d", &shape, &x1, &y1, &x2, &y2) == 5) {
             //printf("shape: %d %c, x1: %d, y1: %d, x2: %d, y2: %d\n", *lineCount, shape, x1, y1, x2, y2);
 
             switch(shape)

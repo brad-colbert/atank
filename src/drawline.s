@@ -1,7 +1,7 @@
 .export _setPixel     ; Provide memory location and bitidx
 .export _setPixelXY   ; Provide on screen X and Y
 .export _setPixelXYmask  ; Provide on screen X and Y and bitmask (for horizontal lines)
-.export _XORLine   ; Export for CC65
+.export _XORLine_16   ; Export for CC65
 .export _calcLeftMask ; Export for CC65
 .export _calcRightMask ; Export for CC65
 
@@ -195,8 +195,8 @@ RM_TABLE: .byte $80, $C0, $E0, $F0, $F8, $FC, $FE, $FF
     rts
 .endproc
 
-; Currently NOT Being Used
-.proc _XORLine
+; Uses 16-bit coordinates
+.proc _XORLine_16
     ; Pull arguments from the stack (CC65 calling convention)
     jsr popa
     sta Y2

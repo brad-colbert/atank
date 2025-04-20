@@ -15,7 +15,7 @@ void cdecl setPixelXYmask(uint8_t x, uint8_t y, uint8_t mask);
 uint8_t fastcall calcLeftMask(uint8_t mask);
 uint8_t fastcall calcRightMask(uint8_t mask);
  
-//void cdecl XORLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
+void cdecl XORLine_16(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 void XORLineC(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 void drawLineB(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2);
 
