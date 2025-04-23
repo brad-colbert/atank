@@ -45,6 +45,11 @@ extern uint8_t coord_count;
 extern int16_t X_val;
 extern int16_t Y_val;
 
+extern uint8_t CARRY;  // Global or static variable to store carry flag state
+
+uint8_t coords[2][32][4];
+Point pos = { 1, 1 }; //{ 320/2, 192/2 }; // Position of the player
+
 int main(void)
 {
 
@@ -64,6 +69,7 @@ int main(void)
 
 #else
 
+    uint8_t active_buff = 0;
     uint16_t t_avg, count = 2;
 
 #if 1
@@ -76,7 +82,6 @@ int main(void)
     uint8_t idxb;
     uint8_t x, y;
     uint8_t lineCount;            // Number of lines in the map
-    Point pos = { 320/2, 192/2 }; // Position of the player
 
     // Load the map
     loadMap("map.txt", &lineCount);
@@ -86,6 +91,7 @@ int main(void)
     base_ptr = (int16_t*)&lines[0];
     coord_count = lineCount*2;       // Number of coordinates to translate
 
+    #define TEST_TRANSLATE_MAP_LINESX
     #ifdef TEST_TRANSLATE_MAP_LINES
     X_val = 0;
     Y_val = 0;
@@ -100,12 +106,15 @@ int main(void)
         }
         cprintf("Line %d:     %4d %4d %4d %4d\n\r", idxb, lines[idxb].start.x, lines[idxb].start.y, lines[idxb].end.x, lines[idxb].end.y);
         clip(lines[idxb].start.x, lines[idxb].start.y, lines[idxb].end.x, lines[idxb].end.y);
-        if(SWAP)
-            //cprintf("Clip %d: %3d|%4d %4d %4d %4d\n\r", idxb, XX13, XX15[2], XX15[3], XX15[0], XX15[1]);
-            cprintf("Clip %d: %3d|%4d %4d %4d %4d\n\r", idxb, XX13, X2, Y2, X1, Y1);
-        else
-            //cprintf("Clip %d: %3d|%4d %4d %4d %4d\n\r", idxb, XX13, XX15[0], XX15[1], XX15[2], XX15[3]);
-            cprintf("Clip %d: %3d|%4d %4d %4d %4d\n\r", idxb, XX13, X1, Y1, X2, Y2);
+        test_carry_and_store();
+        if(CARRY == 0) {
+            if(SWAP)
+                cprintf("Cl*p %d: %3d|%4d %4d %4d %4d\n\r", idxb, XX13, X2, Y2, X1, Y1);
+            else
+                cprintf("Clip %d: %3d|%4d %4d %4d %4d\n\r", idxb, XX13, X1, Y1, X2, Y2);
+        } else {
+            cprintf("Not visible\n\r");
+        }
     }
     cgetc();
     #endif
@@ -113,22 +122,83 @@ int main(void)
     init_graphics();
     clear_graphics();
 
-    #ifdef TEST_TRANLATE_CLIP_DRAW
-    // Translate the coordinates
-    for(y = 0; y < 192; ++y) {
-        //for(x = 0; x < 320; ++x) {
-            X_val = -y;
-            Y_val = -y;
-        
-            // Translate the coordinates
-            arith16_coord_array();
+    #define TEST_TRANSLATE_CLIP_DRAW
+    #ifdef TEST_TRANSLATE_CLIP_DRAW
+    // Vertical line, right of which is the status bar
+    XORLineC(256, 0, 256, 191);
+    XORLineC(257, 0, 319, 0);
+    XORLineC(319, 1, 319, 191);
+    XORLineC(257, 191, 318, 191);
 
-            // Clip and draw the lines
-            for(idxb = 0; idxb < lineCount; ++idxb) {
-                clip(lines[idxb].start.x, lines[idxb].start.y, lines[idxb].end.x, lines[idxb].end.y);
-                drawLineB(X1, Y1, X2, Y2);
+    // Translate the coordinates
+    while(!kbhit()) {
+        X_val = -pos.x;
+        Y_val = -pos.y;
+    
+        // Translate the coordinates
+        //base_ptr = (int16_t*)&lines[0];
+        arith16_coord_array();
+
+        // Clip and draw the lines
+        for(idxb = 0; idxb < lineCount; ++idxb) {
+            clip(lines[idxb].start.x, lines[idxb].start.y, lines[idxb].end.x, lines[idxb].end.y);
+
+            test_carry_and_store();
+            if(CARRY == 0) {
+                if(SWAP) {
+                    x1 = X2;
+                    y1 = Y2;
+                    x2 = X1;
+                    y2 = Y1;
+
+                    // Store the coords, so we can re-draw next time to erase
+                    coords[active_buff][idxb][0] = X2;
+                    coords[active_buff][idxb][1] = Y2;
+                    coords[active_buff][idxb][2] = X1;
+                    coords[active_buff][idxb][3] = Y1;
+                } else {
+                    x1 = X1;
+                    y1 = Y1;
+                    x2 = X2;
+                    y2 = Y2;
+
+                    // Store the coords, so we can re-draw next time to erase
+                    coords[active_buff][idxb][0] = X1;
+                    coords[active_buff][idxb][1] = Y1;
+                    coords[active_buff][idxb][2] = X2;
+                    coords[active_buff][idxb][3] = Y2;
+                }
+
+                // Draw the line
+                XORLineC(x1, y1, x2, y2);
             }
-        //}
+        }
+
+        // Change to the other buffer.  Redraw to erase the old lines
+        active_buff ^= 1;
+        for(idxb = 0; idxb < lineCount; ++idxb) {
+            x1 = coords[active_buff][idxb][0];
+            y1 = coords[active_buff][idxb][1];
+            x2 = coords[active_buff][idxb][2];
+            y2 = coords[active_buff][idxb][3];
+
+            // Draw the line
+            XORLineC(x1, y1, x2, y2);
+        }
+
+        // Update the position
+        if(X_val < -50) {
+            pos.x = -1;
+        }
+        else if(X_val > 50) {
+            pos.x = 1;
+        }
+        if(Y_val < -30) {
+            pos.y = 1;
+        }
+        else if(Y_val > 30) {
+            pos.y = -1;
+        }
     }
 
     cgetc();
@@ -137,19 +207,21 @@ int main(void)
     /* Do graphics stuff */
     TIME_RESET;
 
-#define TEST_16_BIT_LINE_COORD_DRAW
+#define TEST_16_BIT_LINE_COORD_DRAWX
 #ifdef TEST_16_BIT_LINE_COORD_DRAW
+    #define DRAW_VERTICAL_LINESX
+    #ifdef DRAW_VERTICAL_LINES
     // Vertical lines going across.
-    // x1 = 0;
-    // y1 = 1;
-    // x2 = 0;
-    // y2 = 190;
+    x1 = 0;
+    y1 = 1;
+    x2 = 0;
+    y2 = 190;
     
-    // for(idx = 0; idx < 320; idx+=10) {
-    //     XORLineC(x1+idx, y1, x2+idx, y2);
-    //     count++;
-    // }
-    
+    for(idx = 0; idx < 320; idx+=10) {
+        XORLine_16(x1+idx, y1, x2+idx, y2);
+        count++;
+    }
+    #else
     // Horizontal lines going down.
     x1 = 1;
     y1 = 0;
@@ -160,6 +232,7 @@ int main(void)
         XORLineC(x1+idx, y1+idx, x2+idx, y2+idx);
         count++;
     }
+    #endif
 #endif
 
     t_avg = TIME/count;

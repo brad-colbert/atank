@@ -54,6 +54,7 @@
 .import popa
 
 .export _clip
+.export _test_carry_and_store
 
 .zeropage
    XX15:    .res 0 ; x1 as a 16-bit coordinate (x1_hi x1_lo)
@@ -70,6 +71,7 @@
    R:       .res 1 ; T is used to store the gradient of slope
    S:       .res 1 ; T is used to store the gradient of slope
    T:       .res 1 ; T is used to store the gradient of slope
+   CARRY:   .res 1 ; T is used to store the result of the carry flag
 
 .data
    SWAP: .res 1 ; The swap status of the returned coordinates
@@ -89,10 +91,28 @@ _XX13 = XX13
 .export _XX13
 _SWAP = SWAP
 .export _SWAP
+_CARRY = CARRY
+.export _CARRY
 
 .code
 
 _Y = 96  ; The centre y-coordinate of the 256 x 192 space view
+
+
+.proc _test_carry_and_store
+   bcc carry_clear      ; Branch if carry is clear
+   lda #1               ; If carry is set, load 1
+   sta _CARRY           ; Store into C variable
+   jmp carry_done       ; Skip over the clear part
+
+carry_clear:
+   lda #0               ; Carry is clear, load 0
+   sta _CARRY           ; Store into C variable
+
+carry_done:
+   rts
+.endproc
+
 
 .proc _clip
  jsr popa

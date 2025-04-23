@@ -3,14 +3,14 @@
 
 ; Zero page variables
 .segment "ZEROPAGE"
-base_ptr:   .res 2      ; Pointer to start of 16-bit coordinate values block
-coord_count: .res 1     ; Number of 16-bit coordinates to process
-X_val:.res 0            ; Callers write their value to add/subtract here
-X_lo:   .res 1          ; Low byte of constant value to add/subtract
-X_hi:   .res 1          ; High byte of constant value
-Y_val:.res 0            ; Callers write their value to add/subtract here
-Y_lo:   .res 1          ; Low byte of constant value to add/subtract
-Y_hi:   .res 1          ; High byte of constant value
+base_ptr:    .res 2      ; Pointer to start of 16-bit coordinate values block
+coord_count: .res 1      ; Number of 16-bit coordinates to process
+X_val:      .res 0       ; Callers write their value to add/subtract here
+X_lo:        .res 1      ; Low byte of constant value to add/subtract
+X_hi:        .res 1      ; High byte of constant value
+Y_val:      .res 0       ; Callers write their value to add/subtract here
+Y_lo:        .res 1      ; Low byte of constant value to add/subtract
+Y_hi:        .res 1      ; High byte of constant value
 
 _base_ptr = base_ptr
 .export _base_ptr
@@ -25,8 +25,8 @@ _Y_val = Y_val
 
 ; Inputs:
 ;   base_ptr = pointer to first 16-bit word
-;   const_lo/const_hi = 16-bit constant
-;   X = number of 16-bit words to process
+;   X_lo/X_hi,Y_lo/Y_hi = 16-bit constant
+;   coord_count = number of lines to process (up to 32)
 ; Carry flag:
 ;   CLC = addition
 ;   SEC = subtraction
@@ -35,7 +35,7 @@ _Y_val = Y_val
 
 .proc _arith16_coord_array
         ldx coord_count     ; Load number of coords to process
-        cpx #0              ; Check if we have any values to process
+        ;cpx #0              ; Check if we have any values to process
         beq done            ; No values to process
 
         ldy #0              ; X will be our byte offset (2 bytes per word)
@@ -54,10 +54,9 @@ loop:
         sta (base_ptr),y    ; Store result high byte
 
         ; Translate Y
-        iny                 ; Move to next word (2 bytes forward)
-
         clc                 ; Clear carry for addition
 
+        iny                 ; Move to next word (2 bytes forward)
         lda (base_ptr),y    ; Load low byte of current word
         adc Y_lo            ; Add/subtract low constant
         sta (base_ptr),y    ; Store result low byte
