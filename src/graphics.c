@@ -13,14 +13,16 @@ extern uint8_t FBLUT_LO[];
 
 #pragma optimize(push, off)
 
+//#define USE_LOGO
+#ifdef USE_LOGO
 #pragma data-name (push,"FRAMEBUFFER")
-//uint8_t framebuffer[FRAMEBUFFER_SIZE];                 // 320x192 (/8) + 16 (4K boundary)
 #include "logo.h"
 #pragma data-name (pop)
-
-//#pragma data-name (push,"FBLUT")
-//#include "fblut.h"
-//#pragma data-name (pop)
+#else
+#pragma bss-name (push,"FRAMEBUFFER")
+uint8_t framebuffer[7680]; // 320x192 (/8)
+#pragma bss-name (pop)
+#endif
 
 #pragma data-name (push,"GFX8_DL")
 #include "graphics_8_dl.h"
@@ -54,6 +56,7 @@ void init_graphics()
     OS.sdlst = &graphics_8_dl;
 
     // Initilize the framebuffer address LUTs
+    #if 0
     for(i = 0; i < 102; ++i) {
         addr = (uint16_t)&framebuffer[i * 40];
         FBLUT_HI[i] = (uint8_t)(addr>>8);
@@ -63,6 +66,12 @@ void init_graphics()
         addr = (uint16_t)&framebuffer[i * 40 + 4096];
         FBLUT_HI[i+102] = (uint8_t)(addr>>8);
         FBLUT_LO[i+102] = (uint8_t)addr;
+    }
+    #endif
+    for(i = 0; i < 192; ++i) {
+        addr = (uint16_t)&framebuffer[i * 40];
+        FBLUT_HI[i] = (uint8_t)(addr>>8);
+        FBLUT_LO[i] = (uint8_t)addr;
     }
 }
 

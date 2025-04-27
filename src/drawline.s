@@ -7,6 +7,11 @@ _calcRightMask = calcRightMask
 .import popa
 .import _framebuffer ; Import framebuffer variable
 FB_ADDR = _framebuffer ; alias without the _
+;.segment "FRAMEBUFFER"
+;.framebuffer: .res 40*192
+;_framebuffer = framebuffer
+;.export _framebuffer
+;FB_ADDR = framebuffer
 
 ; Define Constants
 SCREEN_WIDTH = 40        ; 320 pixels wide (40 bytes per row)
@@ -191,15 +196,16 @@ vert_loop: ; X now holds the number of lines to draw a pixel on.
         adc FBLINE              ; Calculate the address (lo byte) of the next line
         sta FBLINE              ; Store the result back in the framebuffer line address
         bcc no_carry
-        lda #$00                ; Load the accumulator with 0.  If the Carry was set, this will increment the high byte.
-        adc FBLINE+1            ; Add the framebuffer line address to the X screen location.  If there was a carry, increment the high byte.
-        sta FBLINE+1            ; Store the result back in the framebuffer line address
-        and #$0F                ; Here we begin to test is we crossed a 4K boundary. Check the lower 4 bits of the address to see if they are zero.
-        bne no_zero             ; We are testing if we have crossed a 4K boundary (ANTIC address issue).  If we have, we need to add 16 more bytes to the lower address.
-        clc                     ; Clear the carry
-        lda #$10                ; Get ready to add 16 bytes to the lower address
-        adc FBLINE              ; Add the 16 bytes to the lower address
-        sta FBLINE              ; Store the result back in the framebuffer line address
+        inc FBLINE+1
+        ;lda #$00                ; Load the accumulator with 0.  If the Carry was set, this will increment the high byte.
+        ;adc FBLINE+1            ; Add the framebuffer line address to the X screen location.  If there was a carry, increment the high byte.
+        ;sta FBLINE+1            ; Store the result back in the framebuffer line address
+        ;and #$0F                ; Here we begin to test is we crossed a 4K boundary. Check the lower 4 bits of the address to see if they are zero.
+        ;bne no_zero             ; We are testing if we have crossed a 4K boundary (ANTIC address issue).  If we have, we need to add 16 more bytes to the lower address.
+        ;clc                     ; Clear the carry
+        ;lda #$10                ; Get ready to add 16 bytes to the lower address
+        ;adc FBLINE              ; Add the 16 bytes to the lower address
+        ;sta FBLINE              ; Store the result back in the framebuffer line address
 
 no_carry:
 no_zero:

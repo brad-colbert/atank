@@ -119,7 +119,9 @@ int main(void)
     cgetc();
     #endif
 
+    cgetc();
     init_graphics();
+    cgetc();
     clear_graphics();
 
     #define TEST_TRANSLATE_CLIP_DRAW
