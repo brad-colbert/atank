@@ -93,6 +93,8 @@ _SWAP = SWAP
 .export _SWAP
 _CARRY = CARRY
 .export _CARRY
+_UNUSED = UNUSED
+.export _UNUSED
 
 .code
 

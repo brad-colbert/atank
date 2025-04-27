@@ -21,13 +21,14 @@ void cohen_sutherland(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
 // Function to set a pixel at (x, y)
 void setPixelC(uint16_t x, uint8_t y)
 {
-    setPixelXY(x, y);
+//    setPixelXY(x, y);
 }
 
 // Function to XOR a line from (x1, y1) to (x2, y2) using Bresenham's line algorithm
 // Note: This function assumes a function setPixel(x, y) that sets the pixel at (x, y)
 void XORLineC(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
 {
+    #if 0
     uint16_t idx_y;
     uint16_t offset;
     uint8_t b, idx, x1b, x2b, y1b, y2b;
@@ -120,10 +121,12 @@ void XORLineC(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
         }
     }
     #endif
+    #endif
 }
 
 void drawLineB(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2)
 {
+    #if 0
     uint8_t b, idx;
 
     // Check for horizontal line
@@ -151,4 +154,5 @@ void drawLineB(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2)
             setPixelC(x1, idx); // Replace with actual pixel manipulation code
         }
     }
+    #endif
 }

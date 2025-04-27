@@ -72,7 +72,7 @@ int main(void)
     uint8_t active_buff = 0;
     uint16_t t_avg, count = 2;
 
-#if 1
+#if 0
     uint16_t x1 = 0;
     uint16_t y1 = 0;
     uint16_t x2 = 100;
@@ -124,14 +124,26 @@ int main(void)
 
     #define TEST_TRANSLATE_CLIP_DRAW
     #ifdef TEST_TRANSLATE_CLIP_DRAW
+    #if 0
     // Vertical line, right of which is the status bar
     XORLineC(256, 0, 256, 191);
     XORLineC(257, 0, 319, 0);
     XORLineC(319, 1, 319, 191);
     XORLineC(257, 191, 318, 191);
+    #endif
 
     // Translate the coordinates
+    X1 = 93;
+    X2 = 93;
+    Y1 = 1;
+    Y2 = 191;
     while(!kbhit()) {
+        draw_line();
+        //cgetc();
+        //draw_line(); // erase
+        ++X1;
+        ++X2;
+        #if 0
         X_val = -pos.x;
         Y_val = -pos.y;
     
@@ -199,9 +211,10 @@ int main(void)
         else if(Y_val > 30) {
             pos.y = -1;
         }
+        #endif
     }
-
     cgetc();
+
     #endif
 
     /* Do graphics stuff */

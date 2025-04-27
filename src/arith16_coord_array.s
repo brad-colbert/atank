@@ -26,7 +26,7 @@ _Y_val = Y_val
 ; Inputs:
 ;   base_ptr = pointer to first 16-bit word
 ;   X_lo/X_hi,Y_lo/Y_hi = 16-bit constant
-;   coord_count = number of lines to process (up to 32)
+;   coord_count = number of coords to process (up to 64)
 ; Carry flag:
 ;   CLC = addition
 ;   SEC = subtraction
