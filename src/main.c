@@ -119,9 +119,7 @@ int main(void)
     cgetc();
     #endif
 
-    cgetc();
     init_graphics();
-    cgetc();
     clear_graphics();
 
     #define TEST_TRANSLATE_CLIP_DRAW
@@ -135,16 +133,21 @@ int main(void)
     #endif
 
     // Translate the coordinates
-    X1 = 93;
-    X2 = 93;
-    Y1 = 1;
-    Y2 = 191;
+    X1 = 1;
+    X2 = 254;
+    Y1 = 0;
+    Y2 = 0;
     while(!kbhit()) {
         draw_line();
         //cgetc();
         //draw_line(); // erase
-        ++X1;
-        ++X2;
+        //cgetc();
+        ++Y1;
+        ++Y2;
+        if(Y2 > 191) {
+            Y1 = 0;
+            Y2 = 0;
+        }
         #if 0
         X_val = -pos.x;
         Y_val = -pos.y;
