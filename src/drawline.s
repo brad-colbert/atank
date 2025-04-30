@@ -207,6 +207,7 @@ multi_byte_draw:
         ; Calculate and write the left mask.
         ; We will load A with X1, which is the left most pixel. 
         lda X1                  ; Load X1 into the accumulator
+        and #$07                ; Get the lower 3 bits by masking off the upper bits.
         jsr calcLeftMask
         write_pixel             ; Y has the X1 byte address
 
