@@ -7,11 +7,6 @@ _calcRightMask = calcRightMask
 .import popa
 .import _framebuffer ; Import framebuffer variable
 FB_ADDR = _framebuffer ; alias without the _
-;.segment "FRAMEBUFFER"
-;.framebuffer: .res 40*192
-;_framebuffer = framebuffer
-;.export _framebuffer
-;FB_ADDR = framebuffer
 
 ; Define Constants
 SCREEN_WIDTH = 40        ; 320 pixels wide (40 bytes per row)
@@ -23,6 +18,8 @@ BitMasks:
     .byte $80, $40, $20, $10, $08, $04, $02, $01
 _BitMasks = BitMasks
 .export _BitMasks
+; 8x8 bitmask for left and right edges and single byte line (L * 8 + R) or (x1 * 8 + x2)
+LR_TABLE: .byte $80, $C0, $E0, $F0, $F8, $FC, $FE, $FF,  $00, $40, $60, $70, $78, $7C, $7E, $7F,  $00, $00, $20, $30, $38, $3C, $3E, $3F,  $00, $00, $00, $10, $18, $1C, $1E, $1F,  $00, $00, $00, $00, $08, $0C, $0E, $0F,  $00, $00, $00, $00, $00, $04, $06, $07,  $00, $00, $00, $00, $00, $00, $02, $03,  $00, $00, $00, $00, $00, $00, $00, $01
 
 .import _X1
 X1 = _X1
@@ -51,10 +48,6 @@ _FBLINE = FBLINE
 .export _FBLINE
 
 .data
-;LM_TABLE: .byte $FF, $7F, $3F, $1F, $0F, $07, $03, $01
-;RM_TABLE: .byte $80, $C0, $E0, $F0, $F8, $FC, $FE, $FF
-; 8x8 bitmask for left and right edges and single byte line (L * 8 + R) or (x1 * 8 + x2)
-LR_TABLE: .byte $80, $C0, $E0, $F0, $F8, $FC, $FE, $FF,  $00, $40, $60, $70, $78, $7C, $7E, $7F,  $00, $00, $20, $30, $38, $3C, $3E, $3F,  $00, $00, $00, $10, $18, $1C, $1E, $1F,  $00, $00, $00, $00, $08, $0C, $0E, $0F,  $00, $00, $00, $00, $00, $04, $06, $07,  $00, $00, $00, $00, $00, $00, $02, $03,  $00, $00, $00, $00, $00, $00, $00, $01
 
 .code
 
@@ -111,49 +104,62 @@ LR_TABLE: .byte $80, $C0, $E0, $F0, $F8, $FC, $FE, $FF,  $00, $40, $60, $70, $78
 ; This will calculate a mask for the left most byte of the line.
 ; A should contain X1
 .proc calcLeftMask
-    ;TAX
-    ;LDA LM_TABLE,X
-    multiply_by_8
-    clc                         ; Clear the carry
-    adc #$07                    ; Add 7 to get the correct index
-    tax                         ; Store the result in X
-    lda LR_TABLE, x             ; Load the left mask from the table\
+        multiply_by_8
+        clc                         ; Clear the carry
+        adc #$07                    ; Add 7 to get the correct index
+        tax                         ; Store the result in X
+        lda LR_TABLE, x             ; Load the left mask from the table\
 
-    rts                         ; Return
+        rts                         ; Return
 .endproc
 
 ; This will calculate a mask for the right most byte of the line.
 ; A should contain X2
 .proc calcRightMask
-    ;TAX
-    ;LDA RM_TABLE,X
-    tax                         ; Copy X2 to X
-    lda LR_TABLE, x             ; Load the left mask from the table
+        tax                         ; Copy X2 to X
+        lda LR_TABLE, x             ; Load the left mask from the table
 
-    rts                         ; Return
+        rts                         ; Return
 .endproc
 
 ; A has X1, result is in A
 .proc calc_mask
-    asl                         ; Shift left to multiply by 2
-    asl                         ; Shift left to multiply by 4
-    asl                         ; Shift left to multiply by 8
-    clc                         ; Clear the carry
-    adc X2                      ; Add X2 to get the correct index
-    tax                         ; Store the result in X
-    lda LR_TABLE, x             ; Load the left mask from the table
+        asl                         ; Shift left to multiply by 2
+        asl                         ; Shift left to multiply by 4
+        asl                         ; Shift left to multiply by 8
+        clc                         ; Clear the carry
+        adc X2                      ; Add X2 to get the correct index
+        tax                         ; Store the result in X
+        lda LR_TABLE, x             ; Load the left mask from the table
 
-    rts                         ; Return
+        rts                         ; Return
 .endproc
 
 .proc _draw_line
         ; Test if we have a horizontal line
-        ;lda Y1                  ; Load Y1 into the accumulator
-        ;tay                     ; Copy Y1 to Y
-        ;cmp Y2                  ; Compare with Y2
-        ;bne vertical_line       ; If equal, must be a horizontal line.  Jump to vertical_line if they aren't equal
+        lda Y1                  ; Load Y1 into the accumulator
+        tay                     ; Copy Y1 to Y
+        cmp Y2                  ; Compare with Y2
+        bne vertical            ; If equal, must be a horizontal line.  Jump to vertical_line if they aren't equal
+        jsr horizontal_line     ; Call the horizontal line function
+        jmp done
 
-horizontal_line:
+vertical:        
+        ; Test if we have a vertical line
+        lda X1                  ; Load X1 into the accumulator
+        cmp X2                  ; Compare with X2
+        bne diagonal            ; If equal, must be a vertical line.  Jump to diagonal_line if they aren't equal
+        jsr vertical_line       ; Call the horizontal line function
+        jmp done
+
+diagonal:
+        jsr diagonal_line
+        
+done:        
+        rts
+.endproc
+
+.proc horizontal_line
         ; First let's see how many bytes we need to draw.
         lda X1                  ; Load X1 into the accumulator
         divide_by_8             ; Divide by 8 to get the byte offset
@@ -188,6 +194,8 @@ single_byte_draw:
 
         txa                     ; Transfer the mask to A
         write_pixel
+
+        jmp done
 
 multi_byte_draw:
         ; A contains the number of bytes to draw.  We need to save this for the middle pixels.
@@ -231,20 +239,11 @@ horizonal_loop:
         jsr calcRightMask
         write_pixel             ; Y has the X2 byte address
 
-        jmp done
-        
-diagonal_line:
-        ; Diagonal line (Bresenham's line algorithm)
-done:        
+done:
         rts
 .endproc
 
 .proc vertical_line
-        ; Test if we have a vertical line
-        ;lda X1                  ; Load X1 into the accumulator
-        ;cmp X2                  ; Compare with X2
-        ;bne diagonal_line       ; If equal, must be a vertical line.  Jump to diagonal_line if they aren't equal
-
         ; Calculate the bit mask.  A will have the X1 component in it.
         tay                     ; Copy original value of X1 which is in A to Y, so we don't have to load it again.
         and #$07                ; Get the lower 3 bits by masking off the upper bits.
@@ -306,6 +305,10 @@ no_zero:
         rts
 .endproc
 
+.proc diagonal_line
+        ; Diagonal line (Bresenham's line algorithm)
+        rts
+.endproc
 
 ; Set Y to the framebuffer line address
 ; Set X to the pixel offset in the line

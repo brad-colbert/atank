@@ -48,7 +48,10 @@ extern int16_t Y_val;
 extern uint8_t CARRY;  // Global or static variable to store carry flag state
 
 uint8_t coords[2][32][4];
-Point pos = { 1, 1 }; //{ 320/2, 192/2 }; // Position of the player
+//Point pos = {356,205};
+Point pos = {127,205};
+//Point pos = {356,95};
+//Point pos = {127,95};
 
 int main(void)
 {
@@ -56,31 +59,17 @@ int main(void)
 #define TEST_LOAD_MAP
 #ifdef TEST_LOAD_MAP
 
-#if 0
-    //   x1 y1 x2 y2
-    clip(10,0,100,200);
-
-    printf("\nx1: %d\n", XX15[0]);
-    printf("y1: %d\n", XX15[1]);
-    printf("x2: %d\n", XX15[2]);
-    printf("y2: %d\n", XX15[3]);
-
-    cgetc();
-
-#else
-
-    uint8_t active_buff = 0;
     uint16_t t_avg, count = 2;
 
-#if 0
-    uint16_t x1 = 0;
-    uint16_t y1 = 0;
-    uint16_t x2 = 100;
-    uint16_t y2 = 0;
-    uint16_t idx = 0;
-#endif
-    uint8_t idxb;
-    uint8_t x, y;
+    // uint16_t x1 = 0;
+    // uint16_t y1 = 0;
+    // uint16_t x2 = 100;
+    // uint16_t y2 = 0;
+    // uint16_t idx = 0;
+
+    uint8_t active_buff = 0;
+    uint8_t idxb, temp;
+    //uint8_t x, y;
     uint8_t lineCount;            // Number of lines in the map
 
     // Load the map
@@ -93,8 +82,8 @@ int main(void)
 
     #define TEST_TRANSLATE_MAP_LINESX
     #ifdef TEST_TRANSLATE_MAP_LINES
-    X_val = 0;
-    Y_val = 0;
+    X_val = -pos.x;
+    Y_val = -pos.y;
 
     // Translate the coordinates
     arith16_coord_array();
@@ -117,14 +106,15 @@ int main(void)
         }
     }
     cgetc();
-    #endif
+    //#endif
+    #else
 
     init_graphics();
     clear_graphics();
 
     #define TEST_TRANSLATE_CLIP_DRAW
     #ifdef TEST_TRANSLATE_CLIP_DRAW
-    #if 0
+    #if 1
     // Vertical line, right of which is the status bar
     XORLineC(256, 0, 256, 191);
     XORLineC(257, 0, 319, 0);
@@ -133,22 +123,7 @@ int main(void)
     #endif
 
     // Translate the coordinates
-    X1 = 1;
-    X2 = 254;
-    Y1 = 0;
-    Y2 = 0;
     while(!kbhit()) {
-        draw_line();
-        //cgetc();
-        //draw_line(); // erase
-        //cgetc();
-        ++Y1;
-        ++Y2;
-        if(Y2 > 191) {
-            Y1 = 0;
-            Y2 = 0;
-        }
-        #if 0
         X_val = -pos.x;
         Y_val = -pos.y;
     
@@ -159,10 +134,18 @@ int main(void)
         // Clip and draw the lines
         for(idxb = 0; idxb < lineCount; ++idxb) {
             clip(lines[idxb].start.x, lines[idxb].start.y, lines[idxb].end.x, lines[idxb].end.y);
-
             test_carry_and_store();
+
             if(CARRY == 0) {
                 if(SWAP) {
+                    // Swap the coordinates
+                    temp = X1;
+                    X1 = X2;
+                    X2 = temp;
+                    temp = Y1;
+                    Y1 = Y2;
+                    Y2 = temp;
+                    #if 0
                     x1 = X2;
                     y1 = Y2;
                     x2 = X1;
@@ -173,7 +156,9 @@ int main(void)
                     coords[active_buff][idxb][1] = Y2;
                     coords[active_buff][idxb][2] = X1;
                     coords[active_buff][idxb][3] = Y1;
+                    #endif
                 } else {
+                    #if 0
                     x1 = X1;
                     y1 = Y1;
                     x2 = X2;
@@ -184,13 +169,16 @@ int main(void)
                     coords[active_buff][idxb][1] = Y1;
                     coords[active_buff][idxb][2] = X2;
                     coords[active_buff][idxb][3] = Y2;
+                    #endif
                 }
+                draw_line();
 
                 // Draw the line
-                XORLineC(x1, y1, x2, y2);
+                //XORLineC(x1, y1, x2, y2);
             }
         }
 
+        #if 0
         // Change to the other buffer.  Redraw to erase the old lines
         active_buff ^= 1;
         for(idxb = 0; idxb < lineCount; ++idxb) {
@@ -217,6 +205,7 @@ int main(void)
             pos.y = -1;
         }
         #endif
+        cgetc();
     }
     cgetc();
 
@@ -268,8 +257,6 @@ int main(void)
     /* Done */
     printf ("Done\n");
     return EXIT_SUCCESS;
-#endif
-
 #endif
 
 #ifdef TEST_ARITH16_COORD_ARRAY
