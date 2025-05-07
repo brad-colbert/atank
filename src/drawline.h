@@ -15,6 +15,7 @@ void setPixelC(uint16_t x, uint8_t y);
 uint8_t fastcall calcLeftMask(uint8_t mask);
 uint8_t fastcall calcRightMask(uint8_t mask);
 void fastcall draw_line();
+void fastcall translate_clip_draw_all_lines();
  
 //void cdecl XORLine_16(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 void XORLineC(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);

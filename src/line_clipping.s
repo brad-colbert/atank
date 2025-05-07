@@ -60,11 +60,15 @@
    XX15:    .res 0 ; x1 as a 16-bit coordinate (x1_hi x1_lo)
                    ; y1 as a 16-bit coordinate (y1_hi y1_lo)
                    ; x2 as a 16-bit coordinate (x2_hi x2_lo)
+   _X1_16: .res 0  ; x1 as a 16-bit coordinate (x1_hi x1_lo)
    X1:      .res 1 ; Resulting clipped X1
    Y1:      .res 1 ; Resulting clipped Y1
+   _Y1_16: .res 0  ; y1 as a 16-bit coordinate (x1_hi x1_lo)
    X2:      .res 1 ; Resulting clipped X2
    Y2:      .res 1 ; Resulting clipped Y2
+   _X2_16: .res 0  ; x2 as a 16-bit coordinate (x1_hi x1_lo)
    UNUSED:  .res 2
+   _Y2_16: .res 0  ; x2 as a 16-bit coordinate (x1_hi x1_lo)
    XX12:    .res 6 ; y2 as a 16-bit coordinate (y2_hi y2_lo)
    XX13:    .res 1 ; The state of the original coordinates on-screen
    Q:       .res 1 ; T is used to store the gradient of slope
@@ -73,10 +77,6 @@
    T:       .res 1 ; T is used to store the gradient of slope
    CARRY:   .res 1 ; T is used to store the result of the carry flag
 
-.data
-   SWAP: .res 1 ; The swap status of the returned coordinates
-
-   
 _XX15 = XX15
 .export _XX15
 _X1 = X1
@@ -89,13 +89,21 @@ _Y2 = Y2
 .export _Y2
 _XX13 = XX13
 .export _XX13
-_SWAP = SWAP
-.export _SWAP
 _CARRY = CARRY
 .export _CARRY
 _UNUSED = UNUSED
 .export _UNUSED
+.export _X1_16
+.export _Y1_16
+.export _X2_16
+.export _Y2_16
 
+.data
+   SWAP: .res 1 ; The swap status of the returned coordinates
+
+_SWAP = SWAP
+.export _SWAP
+   
 .code
 
 _Y = 96  ; The centre y-coordinate of the 256 x 192 space view
@@ -117,25 +125,25 @@ carry_done:
 
 
 .proc _clip
- jsr popa
- sta XX12     ; y2
- jsr popa
- sta XX12+1   ; y2
+; jsr popa
+; sta XX12     ; y2
+; jsr popa
+; sta XX12+1   ; y2
 
- jsr popa
- sta XX15+4   ; x2
- jsr popa
- sta XX15+5   ; x2
+; jsr popa
+; sta XX15+4   ; x2
+; jsr popa
+; sta XX15+5   ; x2
 
- jsr popa
- sta XX15+2   ; y1
- jsr popa
- sta XX15+3   ; y1
+; jsr popa
+; sta XX15+2   ; y1
+; jsr popa
+; sta XX15+3   ; y1
 
- jsr popa
- sta XX15     ; x1
- jsr popa
- sta XX15+1   ; x1
+; jsr popa
+; sta XX15     ; x1
+; jsr popa
+; sta XX15+1   ; x1
 
 
 ; This part sets XX13 to reflect which of the two points are on-screen and

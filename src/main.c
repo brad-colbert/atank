@@ -40,8 +40,9 @@ extern uint8_t framebuffer[7696]; // Assume framebuffer is defined elsewhere
 extern uint8_t X1, Y1, X2, Y2; // XX15[4];
 extern uint8_t XX13, SWAP;
 extern Line lines[];
-extern int16_t *base_ptr;
-extern uint8_t coord_count;
+//extern int16_t *base_ptr;
+extern uint8_t line_count;
+//extern uint8_t* line_coords;
 extern int16_t X_val;
 extern int16_t Y_val;
 
@@ -49,8 +50,8 @@ extern uint8_t CARRY;  // Global or static variable to store carry flag state
 
 uint8_t coords[2][32][4];
 //Point pos = {356,205};
-Point pos = {127,205};
-//Point pos = {356,95};
+//Point pos = {127,205};
+Point pos = {356,95};
 //Point pos = {127,95};
 
 int main(void)
@@ -58,8 +59,8 @@ int main(void)
 
 #define TEST_LOAD_MAP
 #ifdef TEST_LOAD_MAP
-
     uint16_t t_avg, count = 2;
+    //Line* lines = (Line*)&line_coords;
 
     // uint16_t x1 = 0;
     // uint16_t y1 = 0;
@@ -70,15 +71,15 @@ int main(void)
     uint8_t active_buff = 0;
     uint8_t idxb, temp;
     //uint8_t x, y;
-    uint8_t lineCount;            // Number of lines in the map
+    //uint8_t lineCount;            // Number of lines in the map
 
     // Load the map
-    loadMap("map.txt", &lineCount);
-    printf("Line count: %d\n", lineCount);
+    loadMap("map.txt", &line_count);
+    printf("Line count: %d\n", line_count);
 
     // Set the arguments to the coordinate translation function
-    base_ptr = (int16_t*)&lines[0];
-    coord_count = lineCount*2;       // Number of coordinates to translate
+    //base_ptr = (int16_t*)&lines[0];
+    //line_count = lineCount*2;       // Number of coordinates to translate
 
     #define TEST_TRANSLATE_MAP_LINESX
     #ifdef TEST_TRANSLATE_MAP_LINES
@@ -126,13 +127,16 @@ int main(void)
     while(!kbhit()) {
         X_val = -pos.x;
         Y_val = -pos.y;
+
+        translate_clip_draw_all_lines();
     
+        #ifdef USE_C_CONTROL_TRANSLATE_CLIP_DRAW
         // Translate the coordinates
         //base_ptr = (int16_t*)&lines[0];
         arith16_coord_array();
 
         // Clip and draw the lines
-        for(idxb = 0; idxb < lineCount; ++idxb) {
+        for(idxb = 0; idxb < line_count; ++idxb) {
             clip(lines[idxb].start.x, lines[idxb].start.y, lines[idxb].end.x, lines[idxb].end.y);
             test_carry_and_store();
 
@@ -204,6 +208,7 @@ int main(void)
         else if(Y_val > 30) {
             pos.y = -1;
         }
+        #endif
         #endif
         cgetc();
     }

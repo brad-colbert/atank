@@ -14,9 +14,10 @@
 
 // 32 lines => 64 coordinates => 256 bytes
 #define MAX_LINES 32
-#pragma data-name (push,"LINE_COORDS")
+#pragma bss-name (push,"LINE_COORDS")
 Line lines[MAX_LINES];
-#pragma data-name (pop)
+#pragma bss-name (pop)
+//extern uint8_t* line_coords;
 
 char* readLine(FILE* file, char* buffer, int maxBytes) {
     int i = 0;
@@ -33,6 +34,7 @@ char* readLine(FILE* file, char* buffer, int maxBytes) {
 }
 
 void loadMap(const char* filename, uint8_t* lineCount) {
+    //Line* lines = (Line*)&line_coords;
     FILE* file;
     //int capacity = 10;
     char buff[128];
@@ -90,6 +92,7 @@ void loadMap(const char* filename, uint8_t* lineCount) {
 }
 
 void drawMap(uint8_t lineCount) {
+    //Line* lines = (Line*)line_coords;
     uint8_t i;
     for (i = 0; i < lineCount; ++i) {
         drawLine(&lines[i]);

@@ -3,16 +3,18 @@ _calcLeftMask = calcLeftMask
 _calcRightMask = calcRightMask
 .export _calcRightMask ; Export for CC65
 .export _draw_line
+.export _translate_clip_draw_all_lines
 
 .import popa
+.import _clip
 .import _framebuffer ; Import framebuffer variable
 FB_ADDR = _framebuffer ; alias without the _
 
 ; Define Constants
 SCREEN_WIDTH = 40        ; 320 pixels wide (40 bytes per row)
 
+; READ ONLY DATA
 .rodata
-
 ; Precomputed bitmasks
 BitMasks:
     .byte $80, $40, $20, $10, $08, $04, $02, $01
@@ -20,6 +22,12 @@ _BitMasks = BitMasks
 .export _BitMasks
 ; 8x8 bitmask for left and right edges and single byte line (L * 8 + R) or (x1 * 8 + x2)
 LR_TABLE: .byte $80, $C0, $E0, $F0, $F8, $FC, $FE, $FF,  $00, $40, $60, $70, $78, $7C, $7E, $7F,  $00, $00, $20, $30, $38, $3C, $3E, $3F,  $00, $00, $00, $10, $18, $1C, $1E, $1F,  $00, $00, $00, $00, $08, $0C, $0E, $0F,  $00, $00, $00, $00, $00, $04, $06, $07,  $00, $00, $00, $00, $00, $00, $02, $03,  $00, $00, $00, $00, $00, $00, $00, $01
+
+; ZEROPAGE
+.zeropage
+FBLINE:  .res 2
+_FBLINE = FBLINE
+.export _FBLINE
 
 .import _X1
 X1 = _X1
@@ -32,6 +40,14 @@ Y2 = _Y2
 MASK = Y2 + 1
 TEMP1_BYTE = Y2 + 1
 TEMP2_BYTE = Y2 + 2
+.import _X1_16
+X1_16 = _X1_16
+.import _Y1_16
+Y1_16 = _Y1_16
+.import _X2_16
+X2_16 = _X2_16
+.import _Y2_16
+Y2_16 = _Y2_16
 
 .segment "FBLUTHI"
 FBLUT_HI:   .res 192
@@ -42,12 +58,27 @@ FBLUT_LO:   .res 192
 _FBLUT_LO = FBLUT_LO
 .export _FBLUT_LO
 
-.zeropage
-FBLINE:  .res 2
-_FBLINE = FBLINE
-.export _FBLINE
+.import _X_val
+X_val = _X_val
+.import _Y_val
+Y_val = _Y_val
 
+; DATA
 .data
+.import _X_val
+.import _Y_val
+.import _SWAP
+SWAP = _SWAP
+
+line_count: .res 1      ; Number of 16-bit coordinates to process
+_line_count = line_count
+.export _line_count
+;.segment "LINE_COORDS"
+;line_coords: .res 256    ; 16-bit coordinate values block.  32 lines. 2 coordinates per line. 2 components per coordinate. 2 bytes per component.
+;_line_coords = line_coords
+;.export _line_coords
+.import _lines
+line_coords = _lines
 
 .code
 
@@ -310,30 +341,111 @@ no_zero:
         rts
 .endproc
 
-; Set Y to the framebuffer line address
-; Set X to the pixel offset in the line
-; Set XX to the bitmask
-.proc set_pixel_from_mask
-        ; Use the LUT to get the framebuffer line address
-        lda FBLUT_LO,y
-        sta FBLINE
-        lda FBLUT_HI,y
-        sta FBLINE+1
+.proc _translate_clip_draw_all_lines
+;_line_coords = line_coords
+;.export _line_coords
+        ldx line_count      ; Load the number of lines to process
+        beq done            ; No values to process
 
-        ; Add the offset in XX to the low byte of the line
-        ;lda FBLINE
-        ;clc
-        ;adc XX
-        ;sta FBLINE
-        ;bcc :+
-        ;inc FBLINE+1
+        ldy #0              ; X will be our byte offset (2 bytes per word)
+loop:
+        ; Translate X1
+        clc                 ; Clear carry for addition
 
-:
-        txa                      ; Transfer the X screen location (byte) to A
-        tay                      ; Transfer the X screen location (byte) to Y
-        lda MASK
-        eor (FBLINE),y           ; XOR the bit with the framebuffer
-        sta (FBLINE),y           ; Store the result back in the framebuffer
+        lda line_coords,y   ; Load low byte of current word
+        adc X_val           ; Add/subtract low constant
+        sta X1_16           ; Store result low byte
 
+        iny                 ; Move to high byte
+        lda line_coords,y   ; Load high byte
+        adc X_val+1         ; Add/subtract high constant + carry
+        sta X1_16+1         ; Store result high byte
+
+        ; Translate Y1
+        clc                 ; Clear carry for addition
+
+        iny                 ; Move to next word (2 bytes forward)
+        lda line_coords,y   ; Load low byte of current word
+        adc Y_val           ; Add/subtract low constant
+        sta Y1_16           ; Store result low byte
+
+        iny                 ; Move to high byte
+        lda line_coords,y   ; Load high byte
+        adc Y_val+1         ; Add/subtract high constant + carry
+        sta Y1_16+1         ; Store result high byte
+
+        ; Translate X2
+        clc                 ; Clear carry for addition
+
+        iny                 ; Move to next word (2 bytes forward)
+        lda line_coords,y   ; Load low byte of current word
+        adc X_val           ; Add/subtract low constant
+        sta X2_16           ; Store result low byte
+
+        iny                 ; Move to high byte
+        lda line_coords,y   ; Load high byte
+        adc X_val+1         ; Add/subtract high constant + carry
+        sta X2_16+1         ; Store result high byte
+
+        ; Translate Y2
+        clc                 ; Clear carry for addition
+
+        iny                 ; Move to next word (2 bytes forward)
+        lda line_coords,y   ; Load low byte of current word
+        adc Y_val           ; Add/subtract low constant
+        sta Y2_16           ; Store result low byte
+
+        iny                 ; Move to high byte
+        lda line_coords,y   ; Load high byte
+        adc Y_val+1         ; Add/subtract high constant + carry
+        sta Y2_16+1         ; Store result high byte
+
+        iny                 ; Move to next word (2 bytes forward)
+
+        ; Now clip the line.
+        ; We have to save the state of the X and Y registers before calling the clip function.
+        tya                 ; Copy Y to A
+        pha                 ; Push Y to stack
+        txa                 ; Copy X to A
+        pha                 ; Push X to stack
+        clc                 ; Clear the carry
+        jsr _clip           ; Call the clip function
+
+        ; If the carry flag is set, the line was not on the screen.
+        bcs carry_set       ; Branch if carry is set.  Don't draw the line.
+
+        ; Test if the coordinates were swapped by the clip function.
+        lda SWAP            ; Load the swap flag
+        beq just_draw_it    ; Branch if carry is set.  Don't draw the line.
+
+        ; Perform the swap
+        ldx X1              ; Load X1 into the X
+        ldy X2              ; Load X2 into the Y
+        txa                 ; Copy X1 to A
+        sta X2              ; Store X1 in X2
+        tya                 ; Copy X2 to A
+        sta X1              ; Store X2 in X1
+
+        ldx Y1              ; Load Y1 into the X
+        ldy Y2              ; Load Y2 into the Y
+        txa                 ; Copy Y1 to A
+        sta Y2              ; Store Y1 in Y2
+        tya                 ; Copy Y2 to A
+        sta Y1              ; Store Y2 in Y1
+
+just_draw_it:
+        ; Now we can draw the line.
+        jsr _draw_line
+        
+carry_set:
+        ; Restore the X and Y registers from the stack
+        pla                 ; Pull X from stack
+        tax                 ; Copy back to X
+        pla                 ; Pull Y from stack
+        tay                 ; Copy back to Y
+
+        dex
+        bne loop
+done:
         rts
 .endproc
