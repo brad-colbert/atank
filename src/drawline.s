@@ -49,6 +49,15 @@ X2_16 = _X2_16
 .import _Y2_16
 Y2_16 = _Y2_16
 
+.import _X_val
+X_val = _X_val
+.import _Y_val
+Y_val = _Y_val
+.import _X_val_prev
+X_val_prev = _X_val_prev
+.import _Y_val_prev
+Y_val_prev = _Y_val_prev
+
 .segment "FBLUTHI"
 FBLUT_HI:   .res 192
 _FBLUT_HI = FBLUT_HI
@@ -58,15 +67,8 @@ FBLUT_LO:   .res 192
 _FBLUT_LO = FBLUT_LO
 .export _FBLUT_LO
 
-.import _X_val
-X_val = _X_val
-.import _Y_val
-Y_val = _Y_val
-
 ; DATA
 .data
-.import _X_val
-.import _Y_val
 .import _SWAP
 SWAP = _SWAP
 
@@ -74,17 +76,62 @@ line_count: .res 1      ; Number of 16-bit coordinates to process
 _line_count = line_count
 .export _line_count
 ;.segment "LINE_COORDS"
-;line_coords: .res 256    ; 16-bit coordinate values block.  32 lines. 2 coordinates per line. 2 components per coordinate. 2 bytes per component.
-;_line_coords = line_coords
-;.export _line_coords
-.import _lines
+.import _lines        ; 16-bit coordinate values block.  32 lines. 2 coordinates per line. 2 components per coordinate. 2 bytes per component.
 line_coords = _lines
 
+; This stores the result of the clipping and are used to erase the old lines.
+.segment "LINE_ERASE_COORDS"
+clipped_line_coords_a: .res 128  ; 32 lines. 2 coordinates per line. 2 components per coordinate. 1 bytes per component.
+clipped_line_coords_b: .res 128  ; 32 lines. 2 coordinates per line. 2 components per coordinate. 1 bytes per component.
+.data
+clipped_line_coords_count_a: .res 1
+clipped_line_coords_count_b: .res 1
+clipped_line_coords_which: .res 1
+.export clipped_line_coords_a
+.export clipped_line_coords_b
+.export clipped_line_coords_count_a
+.export clipped_line_coords_count_b
+.export clipped_line_coords_which
+
 .code
+
+.macro save_y
+        tya                 ; Copy Y to A
+        pha                 ; Push Y to stack
+.endmacro
+.macro restore_y
+        pla                 ; Pull Y from stack
+        tay                 ; Copy back to Y
+.endmacro
+.macro save_x
+        txa                 ; Copy X to A
+        pha                 ; Push X to stack
+.endmacro
+.macro restore_x
+        pla                 ; Pull X from stack
+        tax                 ; Copy back to X
+.endmacro
+.macro save_xy
+        save_x
+        save_y
+.endmacro
+.macro restore_xy
+        restore_y
+        restore_x
+.endmacro
 
 .macro lsr16 MEM
         LSR MEM+1       ;Shift the MSB
         ROR MEM+0       ;Rotate the LSB
+.endmacro
+
+.macro cmp16 V1,V2
+        LDA V1+1
+        CMP V2+1
+        BNE :+
+        LDA V1+0
+        CMP V2+0
+:
 .endmacro
 
 .macro inc_fbline
@@ -342,12 +389,17 @@ no_zero:
 .endproc
 
 .proc _translate_clip_draw_all_lines
-;_line_coords = line_coords
-;.export _line_coords
         ldx line_count      ; Load the number of lines to process
-        beq done            ; No values to process
+        bne cont            ; There are lines to process
+        rts
 
+cont:
         ldy #0              ; X will be our byte offset (2 bytes per word)
+
+        ;sty clipped_line_coords_count_a ; Clear the count of clipped lines
+        ;sty clipped_line_coords_count_b ; Clear the count of clipped lines
+        ;sty clipped_line_coords_which   ; Clear which buffer to use, starting with A
+
 loop:
         ; Translate X1
         clc                 ; Clear carry for addition
@@ -400,14 +452,11 @@ loop:
         adc Y_val+1         ; Add/subtract high constant + carry
         sta Y2_16+1         ; Store result high byte
 
-        iny                 ; Move to next word (2 bytes forward)
+        iny                 ; Move to next word (1 bytes forward)
 
         ; Now clip the line.
         ; We have to save the state of the X and Y registers before calling the clip function.
-        tya                 ; Copy Y to A
-        pha                 ; Push Y to stack
-        txa                 ; Copy X to A
-        pha                 ; Push X to stack
+        save_xy
         clc                 ; Clear the carry
         jsr _clip           ; Call the clip function
 
@@ -416,8 +465,49 @@ loop:
 
         ; Test if the coordinates were swapped by the clip function.
         lda SWAP            ; Load the swap flag
-        beq just_draw_it    ; Branch if carry is set.  Don't draw the line.
+        beq just_draw_it    ; If SWAP is zero, we don't need to swap the coordinates.
+        
+        ; Perform the swap
+        save_xy
+        jsr swap_coords
+        restore_xy
 
+just_draw_it:
+        ; Now we can draw the line.
+        save_xy
+        jsr _draw_line
+        restore_xy
+
+        ; Store these coordinates so we can erase the lines later.
+        save_xy
+        jsr store_coords
+        restore_xy
+
+carry_set:
+        ; Restore the X and Y registers from the stack
+        restore_xy
+
+        dex
+        bne loop
+
+just_erase_previous_lines:
+        ; Erase the previous lines
+        save_xy
+        jsr erase_previous_lines
+        restore_xy
+
+        ; Swap the buffers
+swap_coord_buffers:
+        ; Swap the buffers
+        lda #$01            ; The toggle value
+        eor clipped_line_coords_which
+        sta clipped_line_coords_which ; Store the new buffer to use
+
+done:
+        rts
+.endproc
+
+.proc swap_coords
         ; Perform the swap
         ldx X1              ; Load X1 into the X
         ldy X2              ; Load X2 into the Y
@@ -432,20 +522,134 @@ loop:
         sta Y2              ; Store Y1 in Y2
         tya                 ; Copy Y2 to A
         sta Y1              ; Store Y2 in Y1
+        rts
+.endproc
 
-just_draw_it:
-        ; Now we can draw the line.
-        jsr _draw_line
-        
-carry_set:
-        ; Restore the X and Y registers from the stack
-        pla                 ; Pull X from stack
-        tax                 ; Copy back to X
-        pla                 ; Pull Y from stack
-        tay                 ; Copy back to Y
+.proc store_coords
+        ; Store the clipped line coordinates in the appropriate buffer.
+        lda clipped_line_coords_which ; Load the current buffer to use
+        bne call_store_b    ; If zero, store in buffer A
 
-        dex
-        bne loop
+        ; Store in buffer A
+        jsr store_a
+        jmp done
+
+call_store_b:
+        ; Store in buffer B
+        jsr store_b
+
 done:
         rts
 .endproc
+.proc store_a
+        ldy clipped_line_coords_count_a ; Load the count of clipped coordinates components
+        lda X1              ; Load X1 into the accumulator
+        sta clipped_line_coords_a,y ; Store X1 in the buffer
+        iny                 ; Increment Y to the next byte
+        lda Y1              ; Load Y1 into the accumulator
+        sta clipped_line_coords_a,y ; Store X2 in the buffer
+        iny                 ; Increment Y to the next byte
+        lda X2              ; Load X2 into the accumulator
+        sta clipped_line_coords_a,y ; Store Y1 in the buffer
+        iny                 ; Increment Y to the next byte
+        lda Y2              ; Load Y2 into the accumulator
+        sta clipped_line_coords_a,y ; Store Y2 in the buffer
+        iny                 ; Increment Y to the next byte
+        tya                 ; Copy Y to A
+        sta clipped_line_coords_count_a ; Store the count of clipped coordinates components
+        rts
+.endproc
+.proc store_b
+        ldy clipped_line_coords_count_b ; Load the count of clipped coordinates components
+        lda X1              ; Load X1 into the accumulator
+        sta clipped_line_coords_b,y ; Store X1 in the buffer
+        iny                 ; Increment Y to the next byte
+        lda Y1              ; Load X2 into the accumulator
+        sta clipped_line_coords_b,y ; Store X2 in the buffer
+        iny                 ; Increment Y to the next byte
+        lda X2              ; Load Y1 into the accumulator
+        sta clipped_line_coords_b,y ; Store Y1 in the buffer
+        iny                 ; Increment Y to the next byte
+        lda Y2              ; Load Y2 into the accumulator
+        sta clipped_line_coords_b,y ; Store Y2 in the buffer
+        iny                 ; Increment Y to the next byte
+        tya                 ; Copy Y to A
+        sta clipped_line_coords_count_b ; Store the count of clipped coordinates components
+        rts
+.endproc
+
+.proc erase_previous_lines
+        ; Check which buffer to use
+        lda clipped_line_coords_which ; Load the current buffer to use
+        bne erase_a         ; Erase B if A is active, and vice versa
+        ; Erase buffer B
+        jsr erase_b
+done:
+        rts
+.endproc
+.proc erase_a
+        lda clipped_line_coords_count_a ; Load the count of clipped lines
+        beq done           ; If zero we are done
+
+        ldy #0             ; Clear Y to use as an index
+loop:
+        lda clipped_line_coords_a,y ; Load X1 into the accumulator
+        sta X1             ; Update X1
+        iny                 ; Increment Y to the next byte
+        lda clipped_line_coords_a,y ; Load Y1 into the accumulator
+        sta Y1             ; Update Y1
+        iny                 ; Increment Y to the next byte
+        lda clipped_line_coords_a,y ; Load X2 into the accumulator
+        sta X2             ; Update X2
+        iny                 ; Increment Y to the next byte
+        lda clipped_line_coords_a,y ; Load Y2 into the accumulator
+        sta Y2             ; Update Y2
+        iny                 ; Increment Y to the next byte
+
+        save_y
+        jsr _draw_line ; Draw the line
+        restore_y
+
+        cpy clipped_line_coords_count_a  ; Compare with the count of clipped lines
+        bne loop            ; If not equal, jump to loop
+
+done:
+        ; Clear the count of clipped lines
+        lda #0
+        sta clipped_line_coords_count_a ; Store the count of clipped lines
+
+        rts
+.endproc
+.proc erase_b
+        lda clipped_line_coords_count_b ; Load the count of clipped lines
+        beq done           ; If zero we are done
+
+        ldy #0             ; Clear Y to use as an index
+loop:
+        lda clipped_line_coords_b,y ; Load X1 into the accumulator
+        sta X1             ; Update X1
+        iny                 ; Increment Y to the next byte
+        lda clipped_line_coords_b,y ; Load Y1 into the accumulator
+        sta Y1             ; Update Y1
+        iny                 ; Increment Y to the next byte
+        lda clipped_line_coords_b,y ; Load X2 into the accumulator
+        sta X2             ; Update X2
+        iny                 ; Increment Y to the next byte
+        lda clipped_line_coords_b,y ; Load Y2 into the accumulator
+        sta Y2             ; Update Y2
+        iny                 ; Increment Y to the next byte
+
+        save_y
+        jsr _draw_line      ; Draw the line
+        restore_y
+
+        cpy clipped_line_coords_count_b  ; Compare with the count of clipped lines
+        bne loop            ; If not equal, jump to loop
+done:
+        ; Clear the count of clipped lines
+        lda #0
+        sta clipped_line_coords_count_b ; Store the count of clipped lines
+
+        rts
+.endproc
+.export erase_b

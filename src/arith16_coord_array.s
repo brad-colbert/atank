@@ -10,10 +10,17 @@ Y_val:      .res 0       ; Callers write their value to add/subtract here
 Y_lo:        .res 1      ; Low byte of constant value to add/subtract
 Y_hi:        .res 1      ; High byte of constant value
 
+X_val_prev:  .res 2      ; Previous player position for X
+Y_val_prev:  .res 2      ; Previous player position for Y
+
 _X_val = X_val
 .export _X_val
 _Y_val = Y_val
 .export _Y_val
+_X_val_prev = X_val_prev
+.export _X_val_prev
+_Y_val_prev = Y_val_prev
+.export _Y_val_prev
 
 .data
 .import _line_count

@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 #define TIME (OS.rtclok[1] * 256 + OS.rtclok[2])
 #define TIME_RESET (OS.rtclok[1] = OS.rtclok[2] = 0)
@@ -45,14 +46,19 @@ extern uint8_t line_count;
 //extern uint8_t* line_coords;
 extern int16_t X_val;
 extern int16_t Y_val;
+extern int16_t X_val_prev;
+extern int16_t Y_val_prev;
 
 extern uint8_t CARRY;  // Global or static variable to store carry flag state
 
-uint8_t coords[2][32][4];
+extern uint8_t framebuffer[];
+
+//uint8_t coords[2][32][4];
 //Point pos = {356,205};
 //Point pos = {127,205};
-Point pos = {356,95};
+//Point pos = {356,95};
 //Point pos = {127,95};
+Point pos = {356,0xD0};
 
 int main(void)
 {
@@ -129,6 +135,17 @@ int main(void)
         Y_val = -pos.y;
 
         translate_clip_draw_all_lines();
+
+        X_val_prev = X_val;
+        Y_val_prev = Y_val;
+
+        // Update pos
+        // if(pos.x < 20)
+        //     pos.x = 300;
+        // pos.x = pos.x - 1;
+        if(pos.y < 1)
+            pos.y = 288;
+        pos.y = pos.y - 1;
     
         #ifdef USE_C_CONTROL_TRANSLATE_CLIP_DRAW
         // Translate the coordinates
@@ -210,7 +227,8 @@ int main(void)
         }
         #endif
         #endif
-        cgetc();
+        //cgetc();
+        //memset(framebuffer, 0, sizeof(framebuffer));
     }
     cgetc();
 
