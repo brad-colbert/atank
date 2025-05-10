@@ -256,7 +256,7 @@ single_byte_draw:
         clc                     ; Clear the carry
         lda #$07                ; Load mask into the accumulator
         and X2                  ; And with X2 to get the lower 3 bits by masking off the upper bits.
-        sta X2                  ; Store the result back in X2
+        ;sta X2                  ; Store the result back in X2  ***!! WHAT WAS THIS FOR?!!***
         lda #$07                ; Load mask into the accumulator
         and X1                  ; And with X1 to get the lower 3 bits by masking off the upper bits.
         jsr calc_mask           ; Calculate the bit mask.  A will have the X1 component in it.
@@ -493,6 +493,7 @@ carry_set:
 just_erase_previous_lines:
         ; Erase the previous lines
         save_xy
+        ; Test code to see if we are getting coordinates out of order.
         jsr erase_previous_lines
         restore_xy
 
@@ -525,6 +526,24 @@ done:
         rts
 .endproc
 
+.proc test_coords
+        ; Test code to see if we are getting coordinates out of order.
+        lda X2                  ; Load X1 into the accumulator
+        cmp X1                  ; Compare with X2
+        bcc error
+        lda Y2                  ; Load Y1 into the accumulator
+        cmp Y1                  ; Compare with Y2
+        bcc error
+
+        rts
+
+error:
+        nop                     ; Something easy to find and break on
+        rts
+.endproc
+.export test_coords
+
+
 .proc store_coords
         ; Store the clipped line coordinates in the appropriate buffer.
         lda clipped_line_coords_which ; Load the current buffer to use
@@ -541,6 +560,7 @@ call_store_b:
 done:
         rts
 .endproc
+.export store_coords
 .proc store_a
         ldy clipped_line_coords_count_a ; Load the count of clipped coordinates components
         lda X1              ; Load X1 into the accumulator

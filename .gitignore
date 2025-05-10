@@ -55,6 +55,7 @@ dkms.conf
 .venv
 
 # Our project stuff
+backup
 atr
 test
 temp
@@ -66,4 +67,5 @@ obj
 *.lbl
 *.map
 *.SYS
+*.bak
 

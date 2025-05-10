@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <cc65.h>
 
 #define TIME (OS.rtclok[1] * 256 + OS.rtclok[2])
 #define TIME_RESET (OS.rtclok[1] = OS.rtclok[2] = 0)
@@ -66,18 +67,9 @@ int main(void)
 #define TEST_LOAD_MAP
 #ifdef TEST_LOAD_MAP
     uint16_t t_avg, count = 2;
-    //Line* lines = (Line*)&line_coords;
-
-    // uint16_t x1 = 0;
-    // uint16_t y1 = 0;
-    // uint16_t x2 = 100;
-    // uint16_t y2 = 0;
-    // uint16_t idx = 0;
-
     uint8_t active_buff = 0;
     uint8_t idxb, temp;
-    //uint8_t x, y;
-    //uint8_t lineCount;            // Number of lines in the map
+    int16_t angle = 0;
 
     // Load the map
     loadMap("map.txt", &line_count);
@@ -139,13 +131,19 @@ int main(void)
         X_val_prev = X_val;
         Y_val_prev = Y_val;
 
+        pos.x = _sin(angle)/2 + 250;
+        pos.y = _cos(angle)/2 + 96;
+        angle += 1;
+        if(angle > 360)
+            angle = 0;
+        //printf("Angle: %d,%d,%d\n", angle, pos.x, pos.y);
         // Update pos
         // if(pos.x < 20)
         //     pos.x = 300;
         // pos.x = pos.x - 1;
-        if(pos.y < 1)
-            pos.y = 288;
-        pos.y = pos.y - 1;
+        // if(pos.y < 1)
+        //     pos.y = 288;
+        // pos.y = pos.y - 1;
     
         #ifdef USE_C_CONTROL_TRANSLATE_CLIP_DRAW
         // Translate the coordinates
