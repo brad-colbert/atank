@@ -20,6 +20,8 @@ PROGRAM := atank
 # Default: none
 LIBS	:= 
 
+INCLUDES := -Ifujinet-lib/ -Isrc/
+
 # Custom linker configuration file
 # Use only if you don't want to place it in SRCDIR
 # Default: none
@@ -29,7 +31,7 @@ CONFIG  :=
 # Default: none
 #CFLAGS  = -Oris
 #CFLAGS  = -Or
-CFLAGS  = -Or
+CFLAGS  = -g
  
 # Additional assembler flags and options.
 # Default: none
@@ -164,8 +166,10 @@ plus4_EMUCMD := $(VICE_HOME)xplus4 -TEDdsize -autoload
 c16_EMUCMD := $(VICE_HOME)xplus4 -ramsize 16 -TEDdsize -autoload
 cbm510_EMUCMD := $(VICE_HOME)xcbm2 -model 510 -VICIIdsize -autoload
 cbm610_EMUCMD := $(VICE_HOME)xcbm2 -model 610 -Crtcdsize -autoload
-atari_EMUCMD := atari800 -windowed -xl -ntcs -nopatchall -run
- 
+#atari_EMUCMD := atari800 -windowed -xl -ntcs -nopatchall -run
+atari_EMUCMD := altirra /debug /debugcmd: ".loadsym $(PROGRAM).xex.lbl" /debugcmd: "bp 2CAE"
+#atari_EMUCMD := altirra /debugcmd: ".loadsym $(PROGRAM).xex.lbl" /debugcmd: "bp FFFF"
+
 ifeq ($(EMUCMD),)
   EMUCMD = $($(CC65TARGET)_EMUCMD)
 endif
@@ -299,30 +303,31 @@ $(TARGETOBJDIR):
 vpath %.c $(SRCDIR)/$(TARGETLIST) $(SRCDIR)
  
 $(TARGETOBJDIR)/%.o: %.c | $(TARGETOBJDIR)
-	$(CC) -t $(CC65TARGET) -c --create-dep $(@:.o=.d) $(CFLAGS) -o $@ $<
+	$(CC) -t $(CC65TARGET) -c --create-dep $(@:.o=.d) $(CFLAGS) $(INCLUDES) -o $@ $<
  
 vpath %.s $(SRCDIR)/$(TARGETLIST) $(SRCDIR)
  
 $(TARGETOBJDIR)/%.o: %.s | $(TARGETOBJDIR)
-	$(CC) -t $(CC65TARGET) -Wa -DDYN_DRV=0 -c --create-dep $(@:.o=.d) $(ASFLAGS) -o $@ $<
+	$(CC) -t $(CC65TARGET) -Wa -DDYN_DRV=0 -c --create-dep $(@:.o=.d) $(ASFLAGS) $(INCLUDES) -o $@ $<
  
 vpath %.asm $(SRCDIR)/$(TARGETLIST) $(SRCDIR)
  
 $(TARGETOBJDIR)/%.o: %.asm | $(TARGETOBJDIR)
-	$(CC) -t $(CC65TARGET) -c --create-dep $(@:.o=.d) $(ASFLAGS) -o $@ $<
+	$(CC) -t $(CC65TARGET) -c --create-dep $(@:.o=.d) $(ASFLAGS) $(INCLUDES) -o $@ $<
  
 vpath %.a65 $(SRCDIR)/$(TARGETLIST) $(SRCDIR)
  
 $(TARGETOBJDIR)/%.o: %.a65 | $(TARGETOBJDIR)
-	$(CC) -t $(CC65TARGET) -c --create-dep $(@:.o=.d) $(ASFLAGS) -o $@ $<
+	$(CC) -t $(CC65TARGET) -c --create-dep $(@:.o=.d) $(ASFLAGS) $(INCLUDES) -o $@ $<
  
 $(PROGRAM): $(CONFIG) $(OBJECTS) $(LIBS)
-	$(CC) -t $(CC65TARGET) $(LDFLAGS) -Ln sr.lbl -o $@ $(patsubst %.cfg,-C %.cfg,$^)
+	$(CC) -t $(CC65TARGET) $(LDFLAGS) -Ln $(PROGRAM).lbl -o $@ $(patsubst %.cfg,-C %.cfg,$^)
 
  
+#	$(EMUCMD) $<
 test: $(PROGRAM)
 	$(PREEMUCMD)
-	$(EMUCMD) $<
+	$(EMUCMD) $(PROGRAM).atr
 	$(POSTEMUCMD)
  
 clean:
@@ -371,6 +376,7 @@ $(DISK): $(PROGRAM)
 #	atr $(DISK) put $(PROGRAM) AUTORUN.SYS
 	atr $(DISK) rm autorun.sys
 	atr $(DISK) put $(PROGRAM) autorun.sys
+	atr $(DISK) put data/map.txt map.txt
 
 ###################################################################
 ###  Place your additional targets in the additional Makefiles  ###

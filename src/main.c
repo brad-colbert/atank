@@ -1,483 +1,304 @@
-#if 0
-// Our includes first
-#include "mechanics.h"
+#include "mul16.h"
+#include "shapes.h"
+#include "map.h"
+#include "drawline.h"
 #include "graphics.h"
-#include "playfield.h"
-#include "types.h"
-#include "playfield_utils.h"
-#include "player_missiles.h"
+#include "line_clipping.h"
+#include "arith16_coord_array.h"
 
-// Atari specific includes next
-#include <atari.h>
-#include <joystick.h>
-#include <conio.h>
-
-// Standard C includes
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-
-#define USE_PLAYERS_DRIVE_SCROLL
-#define DELAY 64
-#define JOY_3 2
-#define JOY_4 3
-
-byte joys[4];
-
-void read_joysticks()
-{
-    switch(num_players)
-    {
-        case 4:
-            joys[3] = joy_read(JOY_4);
-        case 3:
-            joys[2] = joy_read(JOY_3);
-        case 2:
-            joys[1] = joy_read(JOY_2);
-        default:
-            joys[0] = joy_read(JOY_1);
-    }
-}
-
-int main()
-{
-    #ifdef USE_PLAYERS_DRIVE_SCROLL
-    u_short delay;
-
-    // Debug pause
-    cprintf("\rHit Key\r");
-    cgetc();  // Pause
-    cprintf("         ");
-
-    // Initialize the components
-    init_playfield();
-    init_graphics();
-    init_player_missiles();
-    joy_install(joy_static_stddrv);
-
-    // Make sure the playfield is initialized
-    set_playfield_viewport(0, 0);
-
-    // Set the number of players (will be done on the opening screen)
-    num_players = 1;
-
-    // Initial joystick read
-    read_joysticks();
-
-    while(!JOY_BTN_1(joys[0]))
-    {
-        byte idx;
-        for(idx = 0; idx < num_players; ++idx)
-        {
-            byte joy = joys[idx];
-            if (JOY_UP(joys[idx])){
-                if(players.all[idx].y > PF_MIN_Y)
-                {
-                    --players.all[idx].y;
-                    players.all[idx].dirty = 1;
-                }
-            }
-            else if (JOY_DOWN(joys[idx])){
-                //if(players.all[idx].y < (PF_LINES - PF_LINES_PER_PAGE - (255-PF_MAX_Y))-1)
-                if(players.all[idx].y < PF_LINES + PLAYFIELD_PLAYER_EDGE_Y) // + PF_LINES_PER_PAGE)
-                {
-                    ++players.all[idx].y;
-                    players.all[idx].dirty = 1;
-                }
-            }
-            if (JOY_LEFT(joys[idx])) {
-                if(players.all[idx].x > PF_MIN_X)
-                {
-                    --players.all[idx].x;
-                    players.all[idx].dirty = 1;
-                }
-            }
-            else if (JOY_RIGHT(joys[idx])) {
-                // *** Why 32!? **
-                // On display list instructions with the horizontal scrolling bit set, ANTIC automatically expands
-                // its screen memory use to the next larger playfield size, unless it is already using a wide playfield.
-                // Scrolling with a 32 byte narrow playfield will cause ANTIC to read memory as if it were using a
-                // normal 40 byte playfield, and scrolling a normal playfield will be processed as if
-                // it were a wide 48 byte playfield.
-                // https://playermissile.com/scrolling_tutorial/index.html#interlude-wide-and-narrow-playfields
-                if(players.all[idx].x < (PF_COLS+PLAYFIELD_PLAYER_EDGE_X)) // + PF_COLS_PER_PAGE)
-                {
-                    ++players.all[idx].x;
-                    players.all[idx].dirty = 1;
-                }
-            }
-        }
-
-        update_player_missiles();
-        update_playfield_using_players();
-
-        //for(delay = 0; delay < DELAY; ++delay);
-
-        read_joysticks();
-    }
-
-    #endif //USE_PLAYERS_DRIVE_SCROLL
-
-    #ifdef USE_JOYSTICK
-
-    byte joy;
-    u_short delay;
-    u_short x, y;
-
-    cprintf("Hit Key");
-    cgetc();  // Pause
-
-    init_graphics();
-    init_playfield();
-    init_player_missiles();
-
-    num_players = 1;
-
-    y = x = 0;
-
-    joy_install(joy_static_stddrv);
-
-    joy = joy_read(JOY_1);
-    while (!JOY_BTN_1(joy))
-    {
-        if (JOY_UP(joy)){
-            if(y > 0)
-                --y;
-        }
-        else if (JOY_DOWN(joy)){
-            if(y < (PF_LINES - PF_LINES_PER_PAGE)-1)
-                ++y;
-        }
-
-        if (JOY_LEFT(joy)) {
-            if(x > 0)
-                --x;
-        }
-        else if (JOY_RIGHT(joy)) {
-            if(x < (PF_COLS - PF_COLS_PER_PAGE)-1)
-                ++x;
-        }
-
-        set_player_position(0, (byte)x, (byte)y);
-        update_player_missiles();
-        scroll_playfield((u_short)x, (u_short)y);
-
-        for(delay = 0; delay < DELAY; ++delay);
-
-        joy = joy_read(JOY_1);
-    }
-
-    joy_uninstall();
-
-    #endif // USE_JOYSTICK
-
-    #ifdef USE_BOUNCE_TEST
-    u_short line_d, col_d;
-    byte bounce_count = 0;
-
-    u_short delay;
-    u_short x, y;
-
-    cprintf("Hit Key");
-    cgetc();  // Pause
-
-    init_graphics();
-    init_playfield();
-
-    line_d = col_d = 0;
-
-    while (bounce_count < 100) // One hundred bounces
-    {
-        scroll_playfield(line, col);
-        //cprintf("%d %d ", line, col);
-        //cprintf("%d %d\n\r", line_d, col_d);
-
-        // Update line and col
-        line += line_d;
-        col  += col_d;
-
-        // Bounce
-        if(line == (PF_LINES - PF_LINES_PER_PAGE)-1) {
-            line_d = -1;
-            ++bounce_count;
-        }
-        else if(line <= 0) {
-            line_d = 1;
-            ++bounce_count;
-        }
-
-        if(col == (PF_COLS - PF_COLS_PER_PAGE)-1) {
-            col_d = -1;
-            ++bounce_count;
-        }
-        else if(col <= 0) {
-            col_d = 1;
-            ++bounce_count;
-        }
-        for(delay = 0; delay < DELAY; ++delay);
-        //sleep(1);
-    }
-
-    #endif // USE_BOUNCE_TEST
-
-    close_player_missiles();
-    close_graphics();
-
-    cprintf("Hit Key To Close");
-    cgetc();  // Pause
-
-    return 0;
-}
-#else
-#include <stdio.h>
-#include <stdlib.h>
 #include <cc65.h>
 #include <conio.h>
 #include <ctype.h>
-#include <modload.h>
-#include <tgi.h>
+// #include <tgi.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
 
+#define TIME (OS.rtclok[1] * 256 + OS.rtclok[2])
+#define TIME_RESET (OS.rtclok[1] = OS.rtclok[2] = 0)
+#define SQUARE(x, y, w, h)                               \
+    {                                                    \
+        {x, y}, {x, y + h}, {x + w, y + h}, { x + w, y } \
+    }
+#define WIDTH 320
 
-#if 0
-#ifndef DYN_DRV
-#  define DYN_DRV       1
-#endif
-#endif
-
-#define COLOR_BACK      TGI_COLOR_BLACK
-#define COLOR_FORE      TGI_COLOR_WHITE
-
+/*****************************************************************************/
+/*                                   Type                                    */
+/*****************************************************************************/
 
 /*****************************************************************************/
 /*                                   Data                                    */
 /*****************************************************************************/
 
-
-
-/* Driver stuff */
-static unsigned MaxX;
-static unsigned MaxY;
-static unsigned AspectRatio;
-
-
+extern uint8_t framebuffer[7696]; // Assume framebuffer is defined elsewhere
 
 /*****************************************************************************/
 /*                                   Code                                    */
 /*****************************************************************************/
 
+extern uint8_t X1, Y1, X2, Y2; // XX15[4];
+extern uint8_t XX13, SWAP;
+extern Line lines[];
+//extern int16_t *base_ptr;
+extern uint8_t line_count;
+//extern uint8_t* line_coords;
+extern int16_t X_val;
+extern int16_t Y_val;
+extern int16_t X_val_prev;
+extern int16_t Y_val_prev;
 
+extern uint8_t CARRY;  // Global or static variable to store carry flag state
 
-static void CheckError (const char* S)
+extern uint8_t framebuffer[];
+
+//uint8_t coords[2][32][4];
+//Point pos = {356,205};
+//Point pos = {127,205};
+//Point pos = {356,95};
+//Point pos = {127,95};
+Point pos = {356,0xD0};
+
+int main(void)
 {
-    unsigned char Error = tgi_geterror ();
 
-    if (Error != TGI_ERR_OK) {
-        printf ("%s: %u: %s\n", S, Error, tgi_geterrormsg(Error));
-        if (doesclrscrafterexit ()) {
-            cgetc ();
+#define TEST_LOAD_MAP
+#ifdef TEST_LOAD_MAP
+    uint16_t t_avg, count = 2;
+    //Line* lines = (Line*)&line_coords;
+
+    // uint16_t x1 = 0;
+    // uint16_t y1 = 0;
+    // uint16_t x2 = 100;
+    // uint16_t y2 = 0;
+    // uint16_t idx = 0;
+
+    uint8_t active_buff = 0;
+    uint8_t idxb, temp;
+    //uint8_t x, y;
+    //uint8_t lineCount;            // Number of lines in the map
+
+    // Load the map
+    loadMap("map.txt", &line_count);
+    printf("Line count: %d\n", line_count);
+
+    // Set the arguments to the coordinate translation function
+    //base_ptr = (int16_t*)&lines[0];
+    //line_count = lineCount*2;       // Number of coordinates to translate
+
+    #define TEST_TRANSLATE_MAP_LINESX
+    #ifdef TEST_TRANSLATE_MAP_LINES
+    X_val = -pos.x;
+    Y_val = -pos.y;
+
+    // Translate the coordinates
+    arith16_coord_array();
+
+    for(idxb = 0; idxb < lineCount; ++idxb) {
+        if((idxb % 9) == 0) {
+            cprintf("Press any key to continue...\n\r");
+            cgetc();
         }
-        exit (EXIT_FAILURE);
-    }
-}
-
-
-
-#if DYN_DRV
-static void DoWarning (void)
-/* Warn the user that the dynamic TGI driver is needed for this program */
-{
-    printf ("Warning: This program needs the TGI\n"
-            "driver on disk! Press 'y' if you have\n"
-            "it - any other key exits.\n");
-    if (tolower (cgetc ()) != 'y') {
-        exit (EXIT_SUCCESS);
-    }
-    printf ("OK. Please wait patiently...\n");
-}
-#endif
-
-
-
-static void DoCircles (void)
-{
-    static const unsigned char Palette[2] = { TGI_COLOR_WHITE, TGI_COLOR_BLUE };
-    unsigned char I;
-    unsigned char Color = COLOR_BACK;
-    const unsigned X = MaxX / 2;
-    const unsigned Y = MaxY / 2;
-    const unsigned Limit = (X < Y) ? Y : X;
-
-    tgi_setpalette (Palette);
-    tgi_setcolor (COLOR_FORE);
-    tgi_clear ();
-    tgi_line (0, 0, MaxX, MaxY);
-    tgi_line (0, MaxY, MaxX, 0);
-    while (!kbhit ()) {
-        Color = (Color == COLOR_FORE) ? COLOR_BACK : COLOR_FORE;
-        tgi_setcolor (Color);
-        for (I = 10; I <= Limit; I += 10) {
-            tgi_ellipse (X, Y, I, tgi_imulround (I, AspectRatio));
+        cprintf("Line %d:     %4d %4d %4d %4d\n\r", idxb, lines[idxb].start.x, lines[idxb].start.y, lines[idxb].end.x, lines[idxb].end.y);
+        clip(lines[idxb].start.x, lines[idxb].start.y, lines[idxb].end.x, lines[idxb].end.y);
+        test_carry_and_store();
+        if(CARRY == 0) {
+            if(SWAP)
+                cprintf("Cl*p %d: %3d|%4d %4d %4d %4d\n\r", idxb, XX13, X2, Y2, X1, Y1);
+            else
+                cprintf("Clip %d: %3d|%4d %4d %4d %4d\n\r", idxb, XX13, X1, Y1, X2, Y2);
+        } else {
+            cprintf("Not visible\n\r");
         }
     }
+    cgetc();
+    //#endif
+    #else
 
-    cgetc ();
-}
+    init_graphics();
+    clear_graphics();
 
+    #define TEST_TRANSLATE_CLIP_DRAW
+    #ifdef TEST_TRANSLATE_CLIP_DRAW
+    #if 1
+    // Vertical line, right of which is the status bar
+    XORLineC(256, 0, 256, 191);
+    XORLineC(257, 0, 319, 0);
+    XORLineC(319, 1, 319, 191);
+    XORLineC(257, 191, 318, 191);
+    #endif
 
+    // Translate the coordinates
+    while(!kbhit()) {
+        X_val = -pos.x;
+        Y_val = -pos.y;
 
-static void DoCheckerboard (void)
-{
-    static const unsigned char Palette[2] = { TGI_COLOR_WHITE, TGI_COLOR_BLACK };
-    unsigned X, Y;
-    unsigned char Color = COLOR_BACK;
+        translate_clip_draw_all_lines();
 
-    tgi_setpalette (Palette);
-    tgi_clear ();
+        X_val_prev = X_val;
+        Y_val_prev = Y_val;
 
-    while (1) {
-        for (Y = 0; Y <= MaxY; Y += 10) {
-            for (X = 0; X <= MaxX; X += 10) {
-                Color = (Color == COLOR_FORE) ? COLOR_BACK : COLOR_FORE;
-                tgi_setcolor (Color);
-                tgi_bar (X, Y, X+9, Y+9);
-                if (kbhit ()) {
-                    cgetc ();
-                    return;
+        // Update pos
+        // if(pos.x < 20)
+        //     pos.x = 300;
+        // pos.x = pos.x - 1;
+        if(pos.y < 1)
+            pos.y = 288;
+        pos.y = pos.y - 1;
+    
+        #ifdef USE_C_CONTROL_TRANSLATE_CLIP_DRAW
+        // Translate the coordinates
+        //base_ptr = (int16_t*)&lines[0];
+        arith16_coord_array();
+
+        // Clip and draw the lines
+        for(idxb = 0; idxb < line_count; ++idxb) {
+            clip(lines[idxb].start.x, lines[idxb].start.y, lines[idxb].end.x, lines[idxb].end.y);
+            test_carry_and_store();
+
+            if(CARRY == 0) {
+                if(SWAP) {
+                    // Swap the coordinates
+                    temp = X1;
+                    X1 = X2;
+                    X2 = temp;
+                    temp = Y1;
+                    Y1 = Y2;
+                    Y2 = temp;
+                    #if 0
+                    x1 = X2;
+                    y1 = Y2;
+                    x2 = X1;
+                    y2 = Y1;
+
+                    // Store the coords, so we can re-draw next time to erase
+                    coords[active_buff][idxb][0] = X2;
+                    coords[active_buff][idxb][1] = Y2;
+                    coords[active_buff][idxb][2] = X1;
+                    coords[active_buff][idxb][3] = Y1;
+                    #endif
+                } else {
+                    #if 0
+                    x1 = X1;
+                    y1 = Y1;
+                    x2 = X2;
+                    y2 = Y2;
+
+                    // Store the coords, so we can re-draw next time to erase
+                    coords[active_buff][idxb][0] = X1;
+                    coords[active_buff][idxb][1] = Y1;
+                    coords[active_buff][idxb][2] = X2;
+                    coords[active_buff][idxb][3] = Y2;
+                    #endif
                 }
+                draw_line();
+
+                // Draw the line
+                //XORLineC(x1, y1, x2, y2);
             }
-            Color = Color == COLOR_FORE ? COLOR_BACK : COLOR_FORE;
         }
-        Color = Color == COLOR_FORE ? COLOR_BACK : COLOR_FORE;
+
+        #if 0
+        // Change to the other buffer.  Redraw to erase the old lines
+        active_buff ^= 1;
+        for(idxb = 0; idxb < lineCount; ++idxb) {
+            x1 = coords[active_buff][idxb][0];
+            y1 = coords[active_buff][idxb][1];
+            x2 = coords[active_buff][idxb][2];
+            y2 = coords[active_buff][idxb][3];
+
+            // Draw the line
+            XORLineC(x1, y1, x2, y2);
+        }
+
+        // Update the position
+        if(X_val < -50) {
+            pos.x = -1;
+        }
+        else if(X_val > 50) {
+            pos.x = 1;
+        }
+        if(Y_val < -30) {
+            pos.y = 1;
+        }
+        else if(Y_val > 30) {
+            pos.y = -1;
+        }
+        #endif
+        #endif
+        //cgetc();
+        //memset(framebuffer, 0, sizeof(framebuffer));
     }
-}
+    cgetc();
 
-
-
-static void DoDiagram (void)
-{
-    static const unsigned char Palette[2] = { TGI_COLOR_WHITE, TGI_COLOR_BLACK };
-    int XOrigin, YOrigin;
-    int Amp;
-    int X, Y;
-    unsigned I;
-
-    tgi_setpalette (Palette);
-    tgi_setcolor (COLOR_FORE);
-    tgi_clear ();
-
-    /* Determine zero and amplitude */
-    YOrigin = MaxY / 2;
-    XOrigin = 10;
-    Amp     = (MaxY - 19) / 2;
-
-    /* Y axis */
-    tgi_line (XOrigin, 10, XOrigin, MaxY-10);
-    tgi_line (XOrigin-2, 12, XOrigin, 10);
-    tgi_lineto (XOrigin+2, 12);
-
-    /* X axis */
-    tgi_line (XOrigin, YOrigin, MaxX-10, YOrigin);
-    tgi_line (MaxX-12, YOrigin-2, MaxX-10, YOrigin);
-    tgi_lineto (MaxX-12, YOrigin+2);
-
-    /* Sine */
-    tgi_gotoxy (XOrigin, YOrigin);
-    for (I = 0; I <= 360; I += 5) {
-
-        /* Calculate the next points */
-        X = (int) (((long) (MaxX - 19) * I) / 360);
-        Y = (int) (((long) Amp * -_sin (I)) / 256);
-
-        /* Draw the line */
-        tgi_lineto (XOrigin + X, YOrigin + Y);
-    }
-
-    cgetc ();
-}
-
-
-
-static void DoLines (void)
-{
-    //static const unsigned char Palette[2] = { TGI_COLOR_WHITE, TGI_COLOR_BLACK };
-    static const unsigned char Palette[4] = { TGI_COLOR_BLACK, TGI_COLOR_WHITE, TGI_COLOR_RED, TGI_COLOR_GREEN };
-
-    unsigned X;
-    const unsigned Min = (MaxX < MaxY) ? MaxX : MaxY;
-
-    tgi_setpalette (Palette);
-    tgi_setcolor (2);
-    tgi_clear ();
-
-    /**/
-    for (X = 0; X <= Min; X += 10) {
-        tgi_line (0, 0, Min, X);
-        tgi_line (0, 0, X, Min);
-        tgi_line (Min, Min, 0, (Min-X));
-        tgi_line (Min, Min, Min-X, 0);
-    }
-    /**/
-
-
-    //cgetc ();
-}
-
-
-
-int main (void)
-{
-    unsigned char Border;
-
-#if DYN_DRV
-    /* Warn the user that the tgi driver is needed */
-    DoWarning ();
-
-    /* Load and initialize the driver */
-    tgi_load_driver (tgi_stddrv);
-    CheckError ("tgi_load_driver");
-#else
-    /* Install the driver */
-    //tgi_install (atr15p2_tgi); //tgi_static_stddrv); //
-    tgi_install (atr8p2_tgi); //tgi_static_stddrv); //
-    CheckError ("tgi_install");
-#endif
-
-    tgi_init ();
-    CheckError ("tgi_init");
-
-    /* Get stuff from the driver */
-    MaxX = tgi_getmaxx ();
-    MaxY = tgi_getmaxy ();
-    AspectRatio = tgi_getaspectratio ();
-
-    /* Set the palette, set the border color */
-    Border = bordercolor (COLOR_BLACK);
+    #endif
 
     /* Do graphics stuff */
-    tgi_setviewpage(0); // Show page 1
-    tgi_setdrawpage(1);
-    //DoCircles ();
-    //DoCheckerboard ();
-    //DoDiagram ();
-    DoLines ();
-    tgi_setviewpage(1); // Show page 1
+    TIME_RESET;
+
+#define TEST_16_BIT_LINE_COORD_DRAWX
+#ifdef TEST_16_BIT_LINE_COORD_DRAW
+    #define DRAW_VERTICAL_LINESX
+    #ifdef DRAW_VERTICAL_LINES
+    // Vertical lines going across.
+    x1 = 0;
+    y1 = 1;
+    x2 = 0;
+    y2 = 190;
+    
+    for(idx = 0; idx < 320; idx+=10) {
+        XORLine_16(x1+idx, y1, x2+idx, y2);
+        count++;
+    }
+    #else
+    // Horizontal lines going down.
+    x1 = 1;
+    y1 = 0;
+    x2 = 126;
+    y2 = 0;
+
+    for(idx = 0; idx < 192; ++idx) {
+        XORLineC(x1+idx, y1+idx, x2+idx, y2+idx);
+        count++;
+    }
+    #endif
+#endif
+
+    t_avg = TIME/count;
 
     cgetc ();
 
-#if DYN_DRV
-    /* Unload the driver */
-    tgi_unload ();
-#else
-    /* Uninstall the driver */
-    tgi_uninstall ();
-#endif
+    shutdown_graphics();
 
-    /* Reset the border */
-    (void) bordercolor (Border);
+    cgetc ();
+
+    cprintf("Time: %u\n", t_avg);
+
+    cgetc();
 
     /* Done */
     printf ("Done\n");
     return EXIT_SUCCESS;
-}
 #endif
+
+#ifdef TEST_ARITH16_COORD_ARRAY
+    int idx = 0;
+    int16_t a[] = { 3, 30, 300, 3000 };
+
+    // Tell where the values to add are
+    base_ptr = a;
+    X_val = 123;
+    Y_val = -10;
+
+    // Tell the function how many coordinates we have
+    __asm__("ldx #%b", 2);
+
+    arith16_coord_array();
+
+    for (; idx < 4; ++idx)
+        printf("%d ", a[idx]);
+
+    cgetc();
+#endif
+}
