@@ -2,6 +2,9 @@
 
 #include "map.h"
 #include "graphics.h"
+#include "player.h"
+
+#include <conio.h>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -12,6 +15,7 @@ extern Line lines[];
 extern Point map_center;
 
 // Globals
+Player player;
 
 void main(void)
 {
@@ -22,12 +26,24 @@ void main(void)
     fprintf(stderr, "Line count: %d\n", line_count);
     #endif
 
+    // Setup the players
+    init_player(&player, 250, 150);
+
     // Initialize graphics
     init_graphics();
 
     // Clear the screen
     clear_graphics();
 
+    while(!kbhit()) {
+        update_player(&player);
+        set_map_center(&player.pos);
+        draw_map();
+    }
+    cgetc();  // Clear the key buffer
 
-    while(1) {}
+    // Return to previous mode
+    shutdown_graphics();
+
+    cgetc();  // Wait for a key press to exit
 }

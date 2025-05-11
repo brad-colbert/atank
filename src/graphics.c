@@ -5,9 +5,11 @@
 #include <stdint.h>
 #include <string.h>  // for memset
 
+// Externals
 extern uint8_t FBLUT_HI[];
 extern uint8_t FBLUT_LO[];
 
+// Globals
 #pragma optimize(push, off)
 
 //#define USE_LOGO

@@ -1,6 +1,7 @@
 #include "map.h"
 #include "shapes.h"
 #include "graphics.h"
+#include "draw.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -104,11 +105,19 @@ void printLines(uint8_t line_count) {
 }
 
 void set_map_center(Point* center) {
-    // We use map_center to offset the coordinates to properly position the map one the screen.
+    // Save the previous center
+    map_center_prev = map_center;
+
+    // We use map_center to offset the coordinates to properly position the map on the screen.
     // This is why we use the negative of the center coordinates.
     map_center.x = -center->x;
     map_center.y = -center->y;
 }
 
 void draw_map() {
+    // Do not draw the map if the center has not changed
+    if (map_center.x == map_center_prev.x && map_center.y == map_center_prev.y) {
+        return;
+    }
+    translate_clip_draw_all_lines();
 }
