@@ -1,12 +1,11 @@
 #include "player.h"
 #include "graphics.h"
 
-#include <cc65.h>
+#include <joystick.h>
 
 // Externals
 
 // Globals
-int16_t angle = 0;
 
 void init_player(Player* player, int16_t x, int16_t y)
 {
@@ -20,17 +19,23 @@ void init_player(Player* player, int16_t x, int16_t y)
 
 void update_player(Player* player)
 {
-    // Update player position based on input or game logic
-    // This will move the player position around in a circle
-    player->pos.x = _sin(angle)/2 + 225; //+ 250 + WIDTH_PIXELS/4;
-    player->pos.y = _cos(angle)/2 + 150; //+ 96 + HEIGHT_PIXELS/4;
-    angle += 1;
-    if(angle > 360)
-        angle = 0;
-    
-    // Update player health, armor, ammo, and score as needed
-    // For example, decrease health by 1
-    if (player->health > 0) {
-        player->health--;
+    uint8_t joy_state = joy_read(JOY_1);
+
+    // Check joystick input
+    if (JOY_UP(joy_state)) {
+        player->pos.y -= 1;
+    }
+    if (JOY_DOWN(joy_state)) {
+        player->pos.y += 1;
+    }
+    if (JOY_LEFT(joy_state)) {
+        player->pos.x -= 1;
+    }
+    if (JOY_RIGHT(joy_state)) {
+        player->pos.x += 1;
+    }
+    if (JOY_FIRE(joy_state)) {
+        // Fire weapon or perform action
+        player->ammo--;
     }
 }

@@ -4,6 +4,7 @@
 #include "graphics.h"
 #include "player.h"
 
+#include <joystick.h>
 #include <conio.h>
 
 #include <stdio.h>
@@ -19,6 +20,9 @@ Player player;
 
 void main(void)
 {
+    // Initialize the joystick
+    joy_install(joy_static_stddrv);
+
     // Load the map
     load_map("map.txt", &line_count);
 

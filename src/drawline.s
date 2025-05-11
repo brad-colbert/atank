@@ -170,6 +170,15 @@ clipped_line_coords_which: .res 1
         sta (FBLINE),y          ; Store the result back in the framebuffer
 .endmacro
 
+.macro clear_mem address
+        ldy #$7F            ; Load Y with 127
+        lda #$00                ; Load the accumulator with 0
+clear_loop:
+        sta address,y             ; Store the result back in the framebuffer
+        dey                     ; Decrement Y
+        bne clear_loop               ; Loop until we are done
+.endmacro
+
 ; This will calculate a mask for the left most byte of the line.
 ; A should contain X1
 .proc calcLeftMask
@@ -204,7 +213,7 @@ clipped_line_coords_which: .res 1
         rts                         ; Return
 .endproc
 
-.proc _draw_line
+.proc draw_line
         ; Test if we have a horizontal line
         lda Y1                  ; Load Y1 into the accumulator
         tay                     ; Copy Y1 to Y
@@ -227,6 +236,7 @@ diagonal:
 done:        
         rts
 .endproc
+.export draw_line
 
 .proc horizontal_line
         ; First let's see how many bytes we need to draw.
@@ -461,7 +471,7 @@ loop:
 just_draw_it:
         ; Now we can draw the line.
         save_xy
-        jsr _draw_line
+        jsr draw_line
         restore_xy
 
         ; Store these coordinates so we can erase the lines later.
@@ -593,6 +603,7 @@ done:
 done:
         rts
 .endproc
+.export erase_previous_lines
 .proc erase_a
         lda clipped_line_coords_count_a ; Load the count of clipped lines
         beq done           ; If zero we are done
@@ -613,7 +624,7 @@ loop:
         iny                 ; Increment Y to the next byte
 
         save_y
-        jsr _draw_line ; Draw the line
+        jsr draw_line ; Draw the line
         restore_y
 
         cpy clipped_line_coords_count_a  ; Compare with the count of clipped lines
@@ -646,7 +657,7 @@ loop:
         iny                 ; Increment Y to the next byte
 
         save_y
-        jsr _draw_line      ; Draw the line
+        jsr draw_line      ; Draw the line
         restore_y
 
         cpy clipped_line_coords_count_b  ; Compare with the count of clipped lines
@@ -658,4 +669,3 @@ done:
 
         rts
 .endproc
-.export erase_b
