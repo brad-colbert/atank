@@ -1,8 +1,3 @@
-_calcLeftMask = calcLeftMask
-.export _calcLeftMask ; Export for CC65
-_calcRightMask = calcRightMask
-.export _calcRightMask ; Export for CC65
-.export _draw_line
 .export _translate_clip_draw_all_lines
 
 .import popa
@@ -49,33 +44,29 @@ X2_16 = _X2_16
 .import _Y2_16
 Y2_16 = _Y2_16
 
-.import _X_val
-X_val = _X_val
-.import _Y_val
-Y_val = _Y_val
-.import _X_val_prev
-X_val_prev = _X_val_prev
-.import _Y_val_prev
-Y_val_prev = _Y_val_prev
+.import _map_center
+map_center = _map_center
+.import _map_center_prev
+map_center_prev = _map_center_prev
 
-.segment "FBLUTHI"
-FBLUT_HI:   .res 192
-_FBLUT_HI = FBLUT_HI
-.export _FBLUT_HI
-.segment "FBLUTLO"
-FBLUT_LO:   .res 192
-_FBLUT_LO = FBLUT_LO
-.export _FBLUT_LO
+.define X_val map_center
+.define Y_val map_center+2
+.define X_val_prev map_center_prev
+.define Y_val_prev map_center_prev+2
 
 ; DATA
 .data
+.import _FBLUT_LO
+FBLUT_LO = _FBLUT_LO
+.import _FBLUT_HI
+FBLUT_HI = _FBLUT_HI
+
 .import _SWAP
 SWAP = _SWAP
 
-line_count: .res 1      ; Number of 16-bit coordinates to process
-_line_count = line_count
-.export _line_count
-;.segment "LINE_COORDS"
+.import _line_count
+line_count = _line_count
+
 .import _lines        ; 16-bit coordinate values block.  32 lines. 2 coordinates per line. 2 components per coordinate. 2 bytes per component.
 line_coords = _lines
 
@@ -256,7 +247,6 @@ single_byte_draw:
         clc                     ; Clear the carry
         lda #$07                ; Load mask into the accumulator
         and X2                  ; And with X2 to get the lower 3 bits by masking off the upper bits.
-        ;sta X2                  ; Store the result back in X2  ***!! WHAT WAS THIS FOR?!!***
         lda #$07                ; Load mask into the accumulator
         and X1                  ; And with X1 to get the lower 3 bits by masking off the upper bits.
         jsr calc_mask           ; Calculate the bit mask.  A will have the X1 component in it.
@@ -395,10 +385,6 @@ no_zero:
 
 cont:
         ldy #0              ; X will be our byte offset (2 bytes per word)
-
-        ;sty clipped_line_coords_count_a ; Clear the count of clipped lines
-        ;sty clipped_line_coords_count_b ; Clear the count of clipped lines
-        ;sty clipped_line_coords_which   ; Clear which buffer to use, starting with A
 
 loop:
         ; Translate X1

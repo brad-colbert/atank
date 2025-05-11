@@ -3,6 +3,8 @@
 
 #include "shapes.h"
 
-void loadMap(const char* filename, uint8_t* lineCount);
+void load_map(const char* filename, uint8_t* line_count);
+
+void set_map_center(Point* center);
 
 #endif

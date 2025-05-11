@@ -1,7 +1,6 @@
 #include "shapes.h"
 
-//#include <tgi.h>
-
+// This converts two's complement signed integers to simply sign bit signed integers for the clipping code.
 uint16_t fix_neg(uint16_t val)
 {
     if (val < 0){
@@ -32,37 +31,3 @@ void setSquare(Square* S, int16_t X, int16_t Y, int16_t W, int16_t H)
     setPoint (&S->ur, X + W, Y + H);
     setPoint (&S->lr, X + W, Y);
 }
-
-void translateLine(Line* L, int X, int Y)
-{
-    L->start.x += X;
-    L->start.y += Y;
-    L->end.x += X;
-    L->end.y += Y;
-}
-
-void drawLine(const Line* L)
-{
-    //tgi_line(L->start.x, L->start.y, L->end.x, L->end.y);
-}
-
-void translateSquare(Square* S, int X, int Y)
-{
-    S->ll.x += X;
-    S->ll.y += Y;
-    S->ul.x += X;
-    S->ul.y += Y;
-    S->ur.x += X;
-    S->ur.y += Y;
-    S->lr.x += X;
-    S->lr.y += Y;
-}
-
-void drawSquare(const Square* S)
-{
-/*
-    tgi_line (S->ll.x, S->ll.y, S->ul.x, S->ul.y);
-    tgi_line (S->ul.x, S->ul.y, S->ur.x, S->ur.y);
-    tgi_line (S->ur.x, S->ur.y, S->lr.x, S->lr.y);
-    tgi_line (S->lr.x, S->lr.y, S->ll.x, S->ll.y);
-*/}

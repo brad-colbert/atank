@@ -1,7 +1,6 @@
 #include "map.h"
 #include "shapes.h"
-
-#include <conio.h>
+#include "graphics.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -12,12 +11,21 @@
 
 #define EOFx 0xFF
 
+// Externals
+
+// Globals
+uint8_t line_count = 0;
+
 // 32 lines => 64 coordinates => 256 bytes
 #define MAX_LINES 32
 #pragma bss-name (push,"LINE_COORDS")
 Line lines[MAX_LINES];
 #pragma bss-name (pop)
-//extern uint8_t* line_coords;
+#pragma data-name (push,"ZEROPAGE")
+Point map_center = {0, 0};
+Point map_center_prev = {0, 0};
+#pragma data-name (pop)
+
 
 char* readLine(FILE* file, char* buffer, int maxBytes) {
     int i = 0;
@@ -33,23 +41,20 @@ char* readLine(FILE* file, char* buffer, int maxBytes) {
     return buffer;
 }
 
-void loadMap(const char* filename, uint8_t* lineCount) {
-    //Line* lines = (Line*)&line_coords;
+void load_map(const char* filename, uint8_t* line_count) {
     FILE* file;
-    //int capacity = 10;
     char buff[128];
-    //cprintf("Loading map from file: %s\n\r", filename);
 
     file = fopen(filename, "r");
 
     if (!file) {
-        cprintf("Failed to open file");
+        printf("Failed to open file");
         exit(-1);
     }
 
-    (*lineCount) = 0;
+    (*line_count) = 0;
 
-     while (readLine(file, buff, sizeof(buff)) && *lineCount < MAX_LINES) {
+     while (readLine(file, buff, sizeof(buff)) && *line_count < MAX_LINES) {
         char shape;
         if (sscanf(buff, "%c", &shape) != 1) {
             continue;
@@ -64,22 +69,22 @@ void loadMap(const char* filename, uint8_t* lineCount) {
 
             if (sscanf(buff, "%c %d,%d %d,%d", &shape, &x1, &y1, &x2, &y2) == 5) {
                 // Offset coordinates to center of screen
-                x1 += 320/2;
-                x2 += 320/2;
-                y1 += 192/2;
-                y2 += 192/2;
+                x1 += WIDTH_PIXELS/2;
+                x2 += WIDTH_PIXELS/2;
+                y1 += HEIGHT_PIXELS/2;
+                y2 += HEIGHT_PIXELS/2;
 
                 switch(shape)
                 {
                     case 'L':
-                        setLine(&lines[(*lineCount)++], x1, y1, x2, y2);
+                        setLine(&lines[(*line_count)++], x1, y1, x2, y2);
                     break;
                     case 'S':
                         // Convert square to four lines
-                        setLine(&lines[(*lineCount)++], x1, y1, x2, y1);
-                        setLine(&lines[(*lineCount)++], x2, y1+1, x2, y2);   // So they don't overlap
-                        setLine(&lines[(*lineCount)++], x1, y1+1, x1, y2);   // So they don't overlap
-                        setLine(&lines[(*lineCount)++], x1+1, y2, x2-1, y2); // So they don't overlap
+                        setLine(&lines[(*line_count)++], x1, y1, x2, y1);
+                        setLine(&lines[(*line_count)++], x2, y1+1, x2, y2);   // So they don't overlap
+                        setLine(&lines[(*line_count)++], x1, y1+1, x1, y2);   // So they don't overlap
+                        setLine(&lines[(*line_count)++], x1+1, y2, x2-1, y2); // So they don't overlap
                     break;
                     default:
                     break;
@@ -91,10 +96,19 @@ void loadMap(const char* filename, uint8_t* lineCount) {
     fclose(file);
 }
 
-void drawMap(uint8_t lineCount) {
-    //Line* lines = (Line*)line_coords;
+void printLines(uint8_t line_count) {
     uint8_t i;
-    for (i = 0; i < lineCount; ++i) {
-        drawLine(&lines[i]);
+    for (i = 0; i < line_count; ++i) {
+        printf("Line %d: (%d, %d) to (%d, %d)\n", i, lines[i].start.x, lines[i].start.y, lines[i].end.x, lines[i].end.y);
     }
+}
+
+void set_map_center(Point* center) {
+    // We use map_center to offset the coordinates to properly position the map one the screen.
+    // This is why we use the negative of the center coordinates.
+    map_center.x = -center->x;
+    map_center.y = -center->y;
+}
+
+void draw_map() {
 }

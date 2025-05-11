@@ -24,10 +24,4 @@ void setPoint(Point* P, int16_t X, int16_t Y);
 void setLine(Line* L, int16_t X1, int16_t Y1, int16_t X2, int16_t Y2);
 void setSquare(Square* S, int16_t X, int16_t Y, int16_t W, int16_t H);
 
-void translateLine(Line* L, int16_t X, int16_t Y);
-void drawLine(const Line* L);
-
-void translateSquare (Square* S, int16_t X, int16_t Y);
-void drawSquare (const Square* S);
-
 #endif
