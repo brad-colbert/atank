@@ -30,14 +30,14 @@ void main(void)
     fprintf(stderr, "Line count: %d\n", line_count);
     #endif
 
-    // Setup the players
-    init_player(&player, 250, 150);
-
     // Initialize graphics
     init_graphics();
 
     // Clear the screen
     clear_graphics();
+
+    // Setup the players
+    init_player(&player, 250, 150);
 
     while(!kbhit()) {
         update_player(&player);

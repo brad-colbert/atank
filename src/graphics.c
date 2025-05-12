@@ -41,7 +41,7 @@ uint8_t FBLUT_HI[HEIGHT_PIXELS];
 void* ORG_SDLIST = 0;
 void* VDSLIST_STATE = 0;
 uint8_t ORG_GPRIOR = 0x0;
-uint8_t ORG_COLOR1, ORG_COLOR2;
+uint8_t ORG_COLOR0, ORG_COLOR1, ORG_COLOR2, ORG_COLOR3, ORG_COLOR4;
 
 // Configures the graphics mode and framebuffer
 void init_graphics()
@@ -53,12 +53,20 @@ void init_graphics()
     ORG_SDLIST = OS.sdlst;
     VDSLIST_STATE = OS.vdslst;
     ORG_GPRIOR = OS.gprior;       // Save current priority states
+    ORG_COLOR0 = OS.color0;
     ORG_COLOR1 = OS.color1;
     ORG_COLOR2 = OS.color2;
+    ORG_COLOR3 = OS.color3;
+    ORG_COLOR4 = OS.color4;
 
     // Set the graphics color and mode
-    OS.color1 = 14;         // Color maximum luminance
-    OS.color2 = 0;          // Background black
+    OS.color1 = 0x0E;      // Gfx 8 luminance
+    OS.color2 = 0x00;      // Gfx 8 background black
+    // OS.color0 = 0x79;         // Gfx 8 unused?
+    // OS.color1 = 0x30;      // Gfx 8 luminance
+    // OS.color2 = 0x00;      // Gfx 8 background black
+    // OS.color3 = 0x0E;         // Gfx 8 unused?
+    // OS.color4 = 0x00;         // Gfx 8 unused?
 
     OS.sdlst = &graphics_8_dl;
 
@@ -75,8 +83,11 @@ void shutdown_graphics()
     OS.gprior = ORG_GPRIOR;           // Return original state of GTIA
     OS.sdlst = ORG_SDLIST;
     OS.vdslst = VDSLIST_STATE;
+    OS.color0 = ORG_COLOR0;
     OS.color1 = ORG_COLOR1;
     OS.color2 = ORG_COLOR2;
+    OS.color3 = ORG_COLOR3;
+    OS.color4 = ORG_COLOR4;
 }
 
 void clear_graphics()
