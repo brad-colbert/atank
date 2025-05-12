@@ -27,7 +27,7 @@ void init_player_missiles()
     ANTIC.pmbase = ((u_short)&player_missiles) >> 8;
     SDMCTL_SAVE = OS.sdmctl;
     OS.sdmctl = OS.sdmctl | DMACTL_PLAYFIELD_NORMAL | DMACTL_DMA_PLAYERS | DMACTL_DMA_MISSILES | DMACTL_DMA_FETCH | PLAYER_LINE_MODE;
-    GTIA_WRITE.gractl = 0x03;
+    GTIA_WRITE.gractl = GRACTL_MISSLES | GRACTL_PLAYERS; //0x03;
     OS.pcolr0 = GTIA_COLOR_RED; //0x3A;  // Red
     OS.pcolr1 = 0x3A;  // Red
     OS.pcolr2 = 0x3A;  // Red
@@ -36,7 +36,8 @@ void init_player_missiles()
     GTIA_WRITE.hposp1 = 0;
     GTIA_WRITE.hposp2 = 0;
     GTIA_WRITE.hposp3 = 0;
-    OS.paddl0 = 1;             // PMs in front of all
+    //GTIA_WRITE.prior = PRIOR_PF03_P03;             // PMs in front of all
+    OS.gprior = PRIOR_PF03_P03;             // PMs in front of all
 
     OS.rtclok[0] = OS.rtclok[1] = OS.rtclok[2] = 0x00;
 
