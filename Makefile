@@ -167,7 +167,7 @@ c16_EMUCMD := $(VICE_HOME)xplus4 -ramsize 16 -TEDdsize -autoload
 cbm510_EMUCMD := $(VICE_HOME)xcbm2 -model 510 -VICIIdsize -autoload
 cbm610_EMUCMD := $(VICE_HOME)xcbm2 -model 610 -Crtcdsize -autoload
 #atari_EMUCMD := atari800 -windowed -xl -ntcs -nopatchall -run
-atari_EMUCMD := altirra /debug /debugcmd: ".loadsym $(PROGRAM).xex.lbl" /debugcmd: "bp 2CAE"
+atari_EMUCMD := altirra /debug /debugcmd: ".loadsym $(PROGRAM).xex.lbl" /debugcmd: "bp FFFF"
 #atari_EMUCMD := altirra /debugcmd: ".loadsym $(PROGRAM).xex.lbl" /debugcmd: "bp FFFF"
 
 ifeq ($(EMUCMD),)
