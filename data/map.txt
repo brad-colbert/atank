@@ -1,19 +1,26 @@
-# L 0,0 20,0
-# L 0,1 0,20
+# Border
 S 0,0 450,300
+# Upper left angle
 L 50,50 100,50
 L 50,51 50,100
+# Upper right angle
 L 350,50 400,50
 L 400,51 400,100
+# Lower left angle
 L 50,200 50,250
-L 51,250 100,250
+L 50,250 100,250
+# Lower right angle
 L 350,250 400,250
-L 400,200 400,249
+L 400,200 400,250
+# Upper left center hazzard
 L 175,125 200,125
-L 200,100 200,124
-L 250,100 250,125
+L 200,100 200,125
+# Upper right center hazzard
+L 250,100 250,126
 L 251,125 275,125
+# Lower left center hazzard
 L 175,175 200,175
 L 200,176 200,200
+# Lower right center hazzard
 L 250,175 275,175
 L 250,176 250,200

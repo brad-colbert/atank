@@ -9,17 +9,17 @@
 #define PLAYER_LINE_MODE DMACTL_PMG_SINGLELINE
 
 typedef struct {
-    char blank[PLAYER_BLANK];
-    char missile3210[PLAYER_HEIGHT];
-    char player0[PLAYER_HEIGHT];
-    char player1[PLAYER_HEIGHT];
-    char player2[PLAYER_HEIGHT];
-    char player3[PLAYER_HEIGHT];
+    uint8_t blank[768]; //PLAYER_BLANK];
+    uint8_t missile3210[PLAYER_HEIGHT];
+    uint8_t player0[PLAYER_HEIGHT];
+    uint8_t player1[PLAYER_HEIGHT];
+    uint8_t player2[PLAYER_HEIGHT];
+    uint8_t player3[PLAYER_HEIGHT];
 } PlayerMissiles;
 
 void __fastcall__ init_player_graphics(Player* player);
 void __fastcall__ update_player_graphics(Player* player);
 void __fastcall__ draw_player_graphics(Player* player);
-void __fastcall__ close_player_graphics(Player* player);
+void __fastcall__ close_player_graphics(void);
 
 #endif // __PLAYER_GRAPHICS_H__

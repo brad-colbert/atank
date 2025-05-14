@@ -26,15 +26,39 @@ void update_player(Player* player)
 
     // Check joystick input
     if (JOY_UP(joy_state)) {
-        player->pos.y -= 1;
+        if(JOY_LEFT(joy_state)) {
+            player->direction = 7; // Up-Left
+            player->pos.x -= 1;
+            player->pos.y -= 1;
+        } else if (JOY_RIGHT(joy_state)) {
+            player->direction = 1; // Up-Right
+            player->pos.x += 1;
+            player->pos.y -= 1;
+        } else {
+            player->direction = 0; // Up
+            player->pos.y -= 1;
+        }
     }
-    if (JOY_DOWN(joy_state)) {
-        player->pos.y += 1;
+    else if (JOY_DOWN(joy_state)) {
+        if(JOY_LEFT(joy_state)) {
+            player->direction = 5; // Down-Left
+            player->pos.x -= 1;
+            player->pos.y += 1;
+        } else if (JOY_RIGHT(joy_state)) {
+            player->direction = 3; // Down-Right
+            player->pos.x += 1;
+            player->pos.y += 1;
+        } else {
+            player->direction = 4; // Down
+            player->pos.y += 1;
+        }
     }
-    if (JOY_LEFT(joy_state)) {
+    else if (JOY_LEFT(joy_state)) {
+        player->direction = 6; // Left
         player->pos.x -= 1;
     }
-    if (JOY_RIGHT(joy_state)) {
+    else if (JOY_RIGHT(joy_state)) {
+        player->direction = 2; // Right
         player->pos.x += 1;
     }
     if (JOY_FIRE(joy_state)) {

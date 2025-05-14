@@ -7,6 +7,7 @@
 
 typedef struct _Player {
     Point pos;
+    uint8_t direction; // 0: up, 1: up-right, 2: right, 3: down-right, 4: down, 5: down-left, 6: left, 7: up-left
     uint8_t health;
     uint8_t armor;
     uint8_t ammo;

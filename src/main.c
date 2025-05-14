@@ -3,6 +3,7 @@
 #include "map.h"
 #include "graphics.h"
 #include "player.h"
+#include "player_graphics.h"
 
 #include <joystick.h>
 #include <conio.h>
@@ -46,6 +47,9 @@ void main(void)
     }
     cgetc();  // Clear the key buffer
 
+    // Close the player graphics
+    close_player_graphics();
+    
     // Return to previous mode
     shutdown_graphics();
 
