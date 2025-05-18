@@ -397,56 +397,8 @@ cont:
         ldy #0              ; X will be our byte offset (2 bytes per word)
 
 loop:
-        ; Translate X1
-        clc                 ; Clear carry for addition
-
-        lda line_coords,y   ; Load low byte of current word
-        adc X_val           ; Add/subtract low constant
-        sta X1_16           ; Store result low byte
-
-        iny                 ; Move to high byte
-        lda line_coords,y   ; Load high byte
-        adc X_val+1         ; Add/subtract high constant + carry
-        sta X1_16+1         ; Store result high byte
-
-        ; Translate Y1
-        clc                 ; Clear carry for addition
-
-        iny                 ; Move to next word (2 bytes forward)
-        lda line_coords,y   ; Load low byte of current word
-        adc Y_val           ; Add/subtract low constant
-        sta Y1_16           ; Store result low byte
-
-        iny                 ; Move to high byte
-        lda line_coords,y   ; Load high byte
-        adc Y_val+1         ; Add/subtract high constant + carry
-        sta Y1_16+1         ; Store result high byte
-
-        ; Translate X2
-        clc                 ; Clear carry for addition
-
-        iny                 ; Move to next word (2 bytes forward)
-        lda line_coords,y   ; Load low byte of current word
-        adc X_val           ; Add/subtract low constant
-        sta X2_16           ; Store result low byte
-
-        iny                 ; Move to high byte
-        lda line_coords,y   ; Load high byte
-        adc X_val+1         ; Add/subtract high constant + carry
-        sta X2_16+1         ; Store result high byte
-
-        ; Translate Y2
-        clc                 ; Clear carry for addition
-
-        iny                 ; Move to next word (2 bytes forward)
-        lda line_coords,y   ; Load low byte of current word
-        adc Y_val           ; Add/subtract low constant
-        sta Y2_16           ; Store result low byte
-
-        iny                 ; Move to high byte
-        lda line_coords,y   ; Load high byte
-        adc Y_val+1         ; Add/subtract high constant + carry
-        sta Y2_16+1         ; Store result high byte
+        ; Translate line coordinates based on player position
+        jsr translate_line
 
         iny                 ; Move to next word (1 bytes forward)
 
@@ -504,6 +456,63 @@ done:
         rts
 .endproc
 
+.export translate_line
+.proc translate_line
+        ; Translate X1
+        clc                 ; Clear carry for addition
+
+        lda line_coords,y   ; Load low byte of current word
+        adc X_val           ; Add/subtract low constant
+        sta X1_16           ; Store result low byte
+
+        iny                 ; Move to high byte
+        lda line_coords,y   ; Load high byte
+        adc X_val+1         ; Add/subtract high constant + carry
+        sta X1_16+1         ; Store result high byte
+
+        ; Translate Y1
+        clc                 ; Clear carry for addition
+
+        iny                 ; Move to next word (2 bytes forward)
+        lda line_coords,y   ; Load low byte of current word
+        adc Y_val           ; Add/subtract low constant
+        sta Y1_16           ; Store result low byte
+
+        iny                 ; Move to high byte
+        lda line_coords,y   ; Load high byte
+        adc Y_val+1         ; Add/subtract high constant + carry
+        sta Y1_16+1         ; Store result high byte
+
+        ; Translate X2
+        clc                 ; Clear carry for addition
+
+        iny                 ; Move to next word (2 bytes forward)
+        lda line_coords,y   ; Load low byte of current word
+        adc X_val           ; Add/subtract low constant
+        sta X2_16           ; Store result low byte
+
+        iny                 ; Move to high byte
+        lda line_coords,y   ; Load high byte
+        adc X_val+1         ; Add/subtract high constant + carry
+        sta X2_16+1         ; Store result high byte
+
+        ; Translate Y2
+        clc                 ; Clear carry for addition
+
+        iny                 ; Move to next word (2 bytes forward)
+        lda line_coords,y   ; Load low byte of current word
+        adc Y_val           ; Add/subtract low constant
+        sta Y2_16           ; Store result low byte
+
+        iny                 ; Move to high byte
+        lda line_coords,y   ; Load high byte
+        adc Y_val+1         ; Add/subtract high constant + carry
+        sta Y2_16+1         ; Store result high byte
+
+        rts
+.endproc
+
+.export swap_coords
 .proc swap_coords
         ; Perform the swap
         ldx X1              ; Load X1 into the X
@@ -522,6 +531,7 @@ done:
         rts
 .endproc
 
+.export test_coords
 .proc test_coords
         ; Test code to see if we are getting coordinates out of order.
         lda X2                  ; Load X1 into the accumulator
@@ -537,9 +547,8 @@ error:
         nop                     ; Something easy to find and break on
         rts
 .endproc
-.export test_coords
 
-
+.export store_coords
 .proc store_coords
         ; Store the clipped line coordinates in the appropriate buffer.
         lda clipped_line_coords_which ; Load the current buffer to use
@@ -556,7 +565,6 @@ call_store_b:
 done:
         rts
 .endproc
-.export store_coords
 .proc store_a
         ldy clipped_line_coords_count_a ; Load the count of clipped coordinates components
         lda X1              ; Load X1 into the accumulator
@@ -594,6 +602,7 @@ done:
         rts
 .endproc
 
+.export erase_previous_lines
 .proc erase_previous_lines
         ; Check which buffer to use
         lda clipped_line_coords_which ; Load the current buffer to use
@@ -603,7 +612,6 @@ done:
 done:
         rts
 .endproc
-.export erase_previous_lines
 .proc erase_a
         lda clipped_line_coords_count_a ; Load the count of clipped lines
         beq done           ; If zero we are done

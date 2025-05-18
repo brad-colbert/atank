@@ -1,6 +1,7 @@
 // Define for your platform.  This one is for Atari
 #include "player_graphics.h"
-#include "standard_tank.h"
+//#include "standard_tank.h"
+#include "player_graphics_data.h"
 
 #include <atari.h>
 
@@ -12,6 +13,9 @@
 #pragma bss-name (push,"PLAYERMISSILE")
 PlayerMissiles pmg;
 #pragma bss-name (pop)
+#pragma data-name (push,"PLAYER_IMAGE_DATA")
+extern PlayerGraphicsData player_image_data;
+#pragma data-name (pop)
 uint16_t SDMCTL_SAVE = 0x00;
 
 void init_player_graphics(Player* player) {
@@ -52,7 +56,7 @@ void init_player_graphics(Player* player) {
 void update_player_graphics(Player* player) {
     GTIA_WRITE.hposp0 = 127;   // horizontal position of player
 
-    memcpy(&(pmg.player0[127-4]), standard_tank_graphics.base_images[player->direction], 8);
+    memcpy(&(pmg.player0[127-4]), player_image_data.player0.base_images[player->direction], 8);
 }
 
 void draw_player_graphics(Player* player) {}

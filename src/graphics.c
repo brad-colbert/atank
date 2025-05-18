@@ -18,9 +18,20 @@ extern uint8_t FBLUT_LO[];
 #include "logo.h"
 #pragma data-name (pop)
 #else
-#pragma bss-name (push,"FRAMEBUFFER")
+//#pragma bss-name (push,"FRAMEBUFFER_1")
+extern uint8_t framebuffer[FRAMEBUFFER_SIZE];
+//#pragma bss-name (pop)
+#if 0
+#pragma bss-name (push,"FRAMEBUFFER_1")
 uint8_t framebuffer[FRAMEBUFFER_SIZE];
 #pragma bss-name (pop)
+#pragma bss-name (push,"PLAYER_IMAGE_DATA")
+#include "standard_tank.h"
+#pragma bss-name (pop)
+#pragma bss-name (push,"FRAMEBUFFER_2")
+uint8_t framebuffer_2[FRAMEBUFFER_SIZE];
+#pragma bss-name (pop)
+#endif
 #endif
 
 #pragma data-name (push,"GFX8_DL")

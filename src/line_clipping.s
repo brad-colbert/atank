@@ -108,6 +108,33 @@ _SWAP = SWAP
 
 _Y = 96  ; The centre y-coordinate of the 256 x 192 space view
 
+.macro to_signed_magnitude COORD
+    ; Check sign bit of original value
+    lda COORD+1
+    bmi :+
+
+; Positive value, ensure sign bit is clear
+    and #$7F
+    sta COORD+1
+    jmp :++
+
+:
+    ; Take two's complement to get absolute value
+    lda COORD
+    eor #$FF
+    clc
+    adc #1
+    sta COORD
+
+    lda COORD+1
+    eor #$FF
+    adc #0
+    and #$7F       ; Clear sign bit
+    ora #$80       ; Set it manually for sign-magnitude
+    sta COORD+1
+:
+.endmacro
+
 
 .proc _test_carry_and_store
    bcc carry_clear      ; Branch if carry is clear
@@ -125,26 +152,11 @@ carry_done:
 
 
 .proc _clip
-; jsr popa
-; sta XX12     ; y2
-; jsr popa
-; sta XX12+1   ; y2
 
-; jsr popa
-; sta XX15+4   ; x2
-; jsr popa
-; sta XX15+5   ; x2
-
-; jsr popa
-; sta XX15+2   ; y1
-; jsr popa
-; sta XX15+3   ; y1
-
-; jsr popa
-; sta XX15     ; x1
-; jsr popa
-; sta XX15+1   ; x1
-
+to_signed_magnitude _X1_16
+to_signed_magnitude _Y1_16
+to_signed_magnitude _X2_16
+to_signed_magnitude _Y2_16
 
 ; This part sets XX13 to reflect which of the two points are on-screen and
 ; off-screen.

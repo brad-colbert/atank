@@ -1,0 +1,109 @@
+#ifndef __PLAYER_GRAPHICS_DATA_H__
+#define __PLAYER_GRAPHICS_DATA_H__
+#include <stdint.h>
+
+typedef struct {
+    uint8_t base_images[8][8];      // 64 bytes for 8 images, each 8x8 pixels
+    uint8_t idle_animation[4][8];   // 32 bytes for 4 idle animation frames, each 8x8 pixels
+    uint8_t other_animation[4][8];  // 32 bytes for 4 idle animation frames, each 8x8 pixels
+} PlayerGraphics;
+
+typedef union {
+    PlayerGraphics players[4];
+    struct {
+        PlayerGraphics player0;
+        PlayerGraphics player1;
+        PlayerGraphics player2;
+        PlayerGraphics player3;
+    };
+} PlayerGraphicsData;
+
+#if 0
+PlayerGraphics standard_tank_graphics = {
+    // Player 0
+    {
+        {   // Up
+            0x18,  // 00011000
+            0x18,  // 00011000
+            0x24,  // 00100100
+            0x5A,  // 11011011
+            0x5A,  // 11011011
+            0x5A,  // 11011011
+            0x5A,  // 11011011
+            0x3C   // 00111100
+        },
+        {   // Up-Right
+            0x00,  // 00000000
+            0x06,  // 00000110
+            0x3E,  // 00111110
+            0x44,  // 01000100
+            0x94,  // 10010100
+            0xA4,  // 10100100  
+            0x48,  // 01001000
+            0x30   // 00110000 
+        },
+        {   // Right
+            0x00,  // 00000000
+            0x78,  // 01111000
+            0x84,  // 10000100
+            0xBB,  // 10111011
+            0xBB,  // 10111011
+            0x84,  // 10000100
+            0x78,  // 01111000
+            0x00   // 00000000
+        },
+        {   // Down-Right
+            0x30,  // 00110000
+            0x48,  // 01001000
+            0xA4,  // 10100100  
+            0x94,  // 10010100
+            0x44,  // 01000100
+            0x3E,  // 00111110
+            0x06,  // 00000110
+            0x00 
+        },
+        {   // Down
+            0x3C,  // 00111100
+            0x5A,  // 11011011
+            0x5A,  // 11011011
+            0x5A,  // 11011011
+            0x5A,  // 11011011
+            0x24,  // 00100100
+            0x18,  // 00011000
+            0x18   // 00011000
+        },
+        {   // Down-Left
+            0x0C,  // 00001100
+            0x12,  // 00010010
+            0x25,  // 00100101
+            0x29,  // 00101001
+            0x22,  // 00100010
+            0x7C,  // 01111100  
+            0x60,  // 01100000
+            0x00   // 00000000
+        },
+        {   // Left
+            0x00,  // 00000000
+            0x1E,  // 00011110
+            0x21,  // 00100001
+            0xDD,  // 11011101
+            0xDD,  // 11011101
+            0x21,  // 00100001
+            0x1E,  // 00011110
+            0x00   // 00000000
+        },
+        {   // Upper-Left
+            0x00,  // 00000000
+            0x60,  // 01100000
+            0x7C,  // 01111100  
+            0x22,  // 00100010
+            0x29,  // 00101001
+            0x25,  // 00100101
+            0x12,  // 00010010
+            0x0C   // 00001100
+        }
+    }
+};
+#endif
+
+#endif
