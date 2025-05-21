@@ -67,3 +67,6 @@ obj
 *.map
 *.SYS
 
+_cache/
+build/
+backup/
