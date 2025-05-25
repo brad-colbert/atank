@@ -1,5 +1,6 @@
 // (C) 2025 Brad Colbert
 #include "graphics.h"
+#include "display_list_antic4.h"
 
 void init_graphics()
 {
