@@ -1,9 +1,18 @@
 // (C) 2025 Brad Colbert
 
-// This file defines the critical data that contains the playfield and game data.
+// This file defines the critical data that contains the playfield, player, and game data.
 #include <stdint.h>
 
 #include "playfield.h"
+#include "player_missiles.h"
+
+#pragma bss-name (push,"PLAYERMISSILE")
+PlayerMissiles player_missiles;
+#pragma bss-name (pop)
+
+#pragma data-name (push,"DISPLAYLIST")
+#include "display_list_antic4.h"
+#pragma data-name (pop)
 
 #pragma bss-name (push,"PLAYFIELD_ROW0")
 tile_struct row_zero[4]; // 3840 bytes per row.  Hows 4 screens worth of data.
@@ -25,12 +34,7 @@ uint8_t buffer_one[256]; // Takes to 4096 bytes, on 4K boundary.  Easier math fo
 tile_struct row_two[4]; // 3840 bytes per row.  Hows 4 screens worth of data.
 #pragma bss-name (pop)
 
-#pragma data-name (push,"DISPLAYLIST")
-// //uint8_t display_list[256]; // 16 bytes for the first buffer
-#include "display_list_antic4.h"
-//uint8_t buffer_two[256]; // Takes to 4096 bytes, on 4K boundary.  Easier math for display list.
-#pragma data-name (pop)
-
+// This will be clobbered when gameplay starts.
 #pragma data-name (push,"LOGO_DL")
 #include "display_list_anticF.h"
 #pragma data-name (pop)
