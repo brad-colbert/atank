@@ -11,7 +11,7 @@
 #define PLAYER_LINE_MODE DMACTL_PMG_SINGLELINE
 
 typedef struct {
-    uint8_t blank[768]; //PLAYER_BLANK];
+    uint8_t blank[PLAYER_BLANK];
     uint8_t missile3210[PLAYER_HEIGHT];
     uint8_t player0[PLAYER_HEIGHT];
     uint8_t player1[PLAYER_HEIGHT];

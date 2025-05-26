@@ -4,6 +4,8 @@
 #include "game_state.h"
 #include "graphics.h"
 
+#include <conio.h>
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -15,10 +17,11 @@ bool done = false;
 
 void main(void)
 {
+    cgetc();
     // Initialize graphics
     init_graphics();
 
-    while(!done)
+    while(!kbhit())
     {
         // Get user input
         process_input();
@@ -41,4 +44,6 @@ void main(void)
 
     // Restore the starting graphics mode
     shutdown_graphics();
+
+    cgetc();
 }
