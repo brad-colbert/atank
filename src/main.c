@@ -17,7 +17,7 @@ bool done = false;
 
 void main(void)
 {
-    cgetc();
+    //cgetc();
     // Initialize graphics
     init_graphics();
 

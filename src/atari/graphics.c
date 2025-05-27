@@ -9,6 +9,9 @@
 #include <stdint.h>
 #include <string.h>
 
+// Temp
+void load_map(void);
+
 // Defines
 #define GFX_9 0x40
 
@@ -18,10 +21,11 @@
 extern void display_list_anticF;
 extern void display_list_antic4;
 extern graphics_state saved_graphics_state; // Defined in playfield_and_data.c
-extern tile_struct row_zero[]; // Defined in playfield_and_data.c
-extern tile_struct row_one[];  // Defined in playfield_and_data.c
-extern tile_struct row_two[];  // Defined in playfield_and_data.c
-extern tile_struct row_three[]; // Defined in playfield_and_data.c
+extern uint8_t font[];                      // Defined in atari-small-4x8-COLOR1.h
+extern tile_struct row_zero[];              // Defined in playfield_and_data.c
+extern tile_struct row_one[];               // Defined in playfield_and_data.c
+extern tile_struct row_two[];               // Defined in playfield_and_data.c
+extern tile_struct row_three[];             // Defined in playfield_and_data.c
 
 void wait_for_start_input()
 {
@@ -58,15 +62,21 @@ void init_graphics()
     saved_graphics_state.color2 = OS.color2; // Save playfield 2 color
     saved_graphics_state.color3 = OS.color3; // Save playfield 3 color
     saved_graphics_state.color4 = OS.color4; // Save background color
+    saved_graphics_state.chbas  = OS.chbas;  // Save original font location
 
-    show_logo_splash();
+    //show_logo_splash();
     
     // Disable ANTIC while we clear the playfield memory
-    OS.sdmctl = 0x00; // Disable ANTIC 
+    //OS.sdmctl = 0x00; // Disable ANTIC 
     memset(row_zero,  0x00, sizeof(tile_struct[4])); // Clear row zero playfield data
     memset(row_one,   0x00, sizeof(tile_struct[4]));   // Clear row one playfield data
     memset(row_two,   0x00, sizeof(tile_struct[4]));   // Clear row two playfield data
     memset(row_three, 0x00, sizeof(tile_struct[4])); // Clear row three playfield data
+    load_map(); // Load the playfield map data
+    cgetc(); // Wait for a key press
+
+    // Use our font for color text
+    OS.chbas = (uint8_t)((uintptr_t)font >> 8); // Set the character base address to our font
 
     // Temp
     memset(0xE000, 0xAA, 128); // Clear row three playfield data
@@ -90,7 +100,7 @@ void init_graphics()
     OS.color3 = 0x99;       // Playfield 3 color (maximum luminance)    // Blue
     OS.color4 = 0x00;       // Background color (black)
 
-    OS.sdmctl = 0x22; // Enable ANTIC 
+    OS.sdmctl = 0x22;       // Enable ANTIC 
 }
 
 void render_frame()
@@ -101,6 +111,7 @@ void render_frame()
 void shutdown_graphics()
 {
     // Restore the starting graphics mode
+    OS.chbas  = saved_graphics_state.chbas;  // Restore the original character base address
     OS.pcolr0 = saved_graphics_state.pcolr0; // Restore player-missile 0 color
     OS.pcolr1 = saved_graphics_state.pcolr1; // Restore player-missile 1 color
     OS.pcolr2 = saved_graphics_state.pcolr2; // Restore player-missile 2 color

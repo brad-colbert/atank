@@ -8,6 +8,11 @@
 #include "player_graphics_data.h"
 #include "graphics.h"
 
+
+#pragma data-name (push,"FONT")
+#include "atari-small-4x8-COLOR3.h"
+#pragma data-name (pop)
+
 #pragma bss-name (push,"PLAYERMISSILE")
 PlayerMissiles player_missiles;
 #pragma bss-name (pop)
