@@ -46,10 +46,10 @@ void show_logo_splash()
 
 void init_graphics()
 {
-    int i;    // Temp
+    //int i;    // Temp
 
     saved_graphics_state.sdmctl = OS.sdmctl; // Save the current SDMCTL register state
-    saved_graphics_state.sdlist = 0xbc20;    // Basic was enabled... need to do something different.  OS.sdlst;  // Save the current display list
+    saved_graphics_state.sdlist = (void*)0xbc20;    // Basic was enabled... need to do something different.  OS.sdlst;  // Save the current display list
     saved_graphics_state.vdslst = OS.vdslst; // Save the current vertical display list
     saved_graphics_state.nmien  = ANTIC.nmien; // Save the NMI state
     saved_graphics_state.gprior = OS.gprior; // Save the graphics priority state
@@ -64,24 +64,24 @@ void init_graphics()
     saved_graphics_state.color4 = OS.color4; // Save background color
     saved_graphics_state.chbas  = OS.chbas;  // Save original font location
 
-    //show_logo_splash();
+    show_logo_splash();
     
     // Disable ANTIC while we clear the playfield memory
-    //OS.sdmctl = 0x00; // Disable ANTIC 
-    memset(row_zero,  0x00, sizeof(tile_struct[4])); // Clear row zero playfield data
-    memset(row_one,   0x00, sizeof(tile_struct[4]));   // Clear row one playfield data
-    memset(row_two,   0x00, sizeof(tile_struct[4]));   // Clear row two playfield data
-    memset(row_three, 0x00, sizeof(tile_struct[4])); // Clear row three playfield data
+    OS.sdmctl = 0x00; // Disable ANTIC 
+    memset(row_zero,  0x00, sizeof(playfield_block_struct)); // Clear row zero playfield data
+    memset(row_one,   0x00, sizeof(playfield_block_struct)); // Clear row one playfield data
+    memset(row_two,   0x00, sizeof(playfield_block_struct)); // Clear row two playfield data
+    memset(row_three, 0x00, sizeof(playfield_block_struct)); // Clear row three playfield data
     load_map(); // Load the playfield map data
-    cgetc(); // Wait for a key press
+    //cgetc(); // Wait for a key press
 
     // Use our font for color text
     OS.chbas = (uint8_t)((uintptr_t)font >> 8); // Set the character base address to our font
 
     // Temp
-    memset(0xE000, 0xAA, 128); // Clear row three playfield data
-    for(i=0; i<256; ++i)
-        row_zero[0].data[0%40][i] = i; // Clear the first tile in row zero
+    //memset((void*)0xE000, 0xAA, 128); // Clear row three playfield data
+    //for(i=0; i<256; ++i)
+    //    row_zero[0].data[0%40][i] = i; // Clear the first tile in row zero
 
     // Change to ANTIC 4
     OS.sdlst = &display_list_antic4;         // Set the display list to ANTIC 4 mode
@@ -100,7 +100,9 @@ void init_graphics()
     OS.color3 = 0x99;       // Playfield 3 color (maximum luminance)    // Blue
     OS.color4 = 0x00;       // Background color (black)
 
-    OS.sdmctl = 0x22;       // Enable ANTIC 
+    OS.sdmctl = 0x22;       // Enable ANTIC (normal playfield width)
+    //OS.sdmctl = 0x23;       // Enable ANTIC (wide playfield width)
+    ANTIC.hscrol = 0x0F;      // Set horizontal scroll to 0
 }
 
 void render_frame()

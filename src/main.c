@@ -14,10 +14,8 @@
 bool done = false;
 
 // Imports
-
 void main(void)
 {
-    //cgetc();
     // Initialize graphics
     init_graphics();
 

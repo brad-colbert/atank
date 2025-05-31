@@ -9,9 +9,9 @@
 #include "graphics.h"
 
 
-#pragma data-name (push,"FONT")
-#include "atari-small-4x8-COLOR3.h"
-#pragma data-name (pop)
+//#pragma data-name (push,"FONT")
+//#include "atari-small-4x8-COLOR1.h"
+//#pragma data-name (pop)
 
 #pragma bss-name (push,"PLAYERMISSILE")
 PlayerMissiles player_missiles;
@@ -33,7 +33,7 @@ PlayerGraphics player3_graphics;
 #pragma bss-name (pop)
 
 #pragma bss-name (push,"PLAYFIELD_ROW0")
-tile_struct row_zero[4]; // 3840 bytes per row.  Hows 4 screens worth of data.
+playfield_block_struct row_zero; // 3840 bytes per row.  Hows 4 screens worth of data.
 #pragma bss-name (pop)
 
 #pragma bss-name (push,"GAME_DATA0")
@@ -41,7 +41,7 @@ uint8_t buffer_zero[256]; // Takes to 4096 bytes, on 4K boundary.  Easier math f
 #pragma bss-name (pop)
 
 #pragma bss-name (push,"PLAYFIELD_ROW1")
-tile_struct row_one[4]; // 3840 bytes per row.  Hows 4 screens worth of data.
+playfield_block_struct row_one; // 3840 bytes per row.  Hows 4 screens worth of data.
 #pragma bss-name (pop)
 
 #pragma bss-name (push,"GAME_DATA1")
@@ -49,7 +49,7 @@ uint8_t buffer_one[256]; // Takes to 4096 bytes, on 4K boundary.  Easier math fo
 #pragma bss-name (pop)
 
 #pragma bss-name (push,"PLAYFIELD_ROW2")
-tile_struct row_two[4]; // 3840 bytes per row.  Hows 4 screens worth of data.
+playfield_block_struct row_two; // 3840 bytes per row.  Hows 4 screens worth of data.
 #pragma bss-name (pop)
 
 #pragma bss-name (push,"GAME_DATA2")
@@ -63,5 +63,5 @@ graphics_state saved_graphics_state; // Save the graphics state for later restor
 #pragma data-name (pop)
 
 #pragma bss-name (push,"PLAYFIELD_ROW3")
-tile_struct row_three[4]; // 3840 bytes per row.  Hows 4 screens worth of data.
+playfield_block_struct row_three; // 3840 bytes per row.  Hows 4 screens worth of data.
 #pragma bss-name (pop)

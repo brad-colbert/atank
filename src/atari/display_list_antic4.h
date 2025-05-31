@@ -10,7 +10,8 @@
 #define TILE_NUM 0
 
 // Globals
-extern tile_struct row_zero[]; // 4080 bytes for the first part (102 lines of 40 bytes each)
+extern playfield_block_struct row_zero; // 4080 bytes for the first part (102 lines of 40 bytes each)
+extern playfield_block_struct row_one; // 4080 bytes for the first part (102 lines of 40 bytes each)
 
 void display_list_antic4 =
 {
@@ -18,34 +19,34 @@ void display_list_antic4 =
     DL_BLK8,
     DL_BLK8,
 
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[0][0], // ANTIC 4
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[1][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[2][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[3][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[4][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[5][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[6][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[7][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[8][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[9][0], // Ln 10,  33 bytes
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[0],  // ANTIC 4
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[1],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[2],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[3],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[4],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[5],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[6],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[7],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[8],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[9],  // Ln 10,  33 bytes
 
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[10][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[11][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[12][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[13][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[14][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[15][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[16][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[17][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[18][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[19][0], // Ln 20,  63 bytes
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[10],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[11],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[12],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[13],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[14],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[15],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[16],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[17],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[18],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[19], // Ln 20,  63 bytes
 
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[20][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[21][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[22][0],
-    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero[TILE_NUM].data[23][0], // Ln 24,  75 bytes
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[20],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[21],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[22],
+    DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[23], // Ln 24,  75 bytes
 
-    DL_LMS(DL_HSCROL(DL_CHR40x8x4)),  &row_zero[TILE_NUM].data[24][0],            // Buffer Ln 25,  75 bytes
+    DL_LMS(DL_HSCROL(DL_CHR40x8x4)),  &row_one.rows[0],              // Buffer Ln 25,  75 bytes
 
     DL_JVB, &display_list_antic4,                                                 // 78 bytes
 
