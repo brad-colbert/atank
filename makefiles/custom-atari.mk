@@ -18,11 +18,12 @@ LDFLAGS += -C src/atari/atank.atari-xex.cfg --cpu 6502
 SUFFIX = .xex
 DISK_TASKS += .atr
 DISK_UTIL = atr
-DISKS_DIR = disks/
+DISKS_DIR = disks
 BASE_DISK = base.atr
 PICOBOOT_DOWNLOAD_URL = https://github.com/FujiNetWIFI/assets/releases/download/picobin/picoboot.bin
 DATA_DIR = data/maps
-MAP_FILE = z2.atm
+#MAP_FILE = z2.atm
+MAP_FILE = *.scr
 
 # atari cache dir
 ATARI_CACHE_DIR := $(CACHE_DIR)/atari
@@ -53,17 +54,23 @@ else
 	$(call MKDIR,$(CACHE_DIR))
 	$(call MKDIR,$(ATARI_CACHE_DIR))
 	cp $(DIST_DIR)/$(PROGRAM_TGT)$(SUFFIX) $(DIST_DIR)/atr/$(PROGRAM)$(SUFFIX)
-	cp $(DATA_DIR)/$(MAP_FILE) $(DIST_DIR)/atr/$(MAP_FILE)
+	cp $(DATA_DIR)/$(MAP_FILE) $(DIST_DIR)/atr/
 	cp $(DISKS_DIR)/$(BASE_DISK) $(DIST_DIR)/$(PROGRAM).atr
 	@if [ ! -f $(ATARI_CACHE_DIR)/picoboot.bin ] ; then \
 		echo "Downloading picoboot.bin"; \
 		curl -sL $(PICOBOOT_DOWNLOAD_URL) -o $(ATARI_CACHE_DIR)/picoboot.bin; \
 	fi
 	atr $(DIST_DIR)/$(PROGRAM).atr put $(DIST_DIR)/atr/$(PROGRAM)$(SUFFIX) autorun.sys
-	atr $(DIST_DIR)/$(PROGRAM).atr put $(DATA_DIR)/$(MAP_FILE) $(MAP_FILE)
+	atr $(DIST_DIR)/$(PROGRAM).atr put $(DATA_DIR)/z2.atm z2.atm
+	@for file in $(DATA_DIR)/*.scr ; do \
+		justfile=$${file##*/}; \
+		atr $(DIST_DIR)/$(PROGRAM).atr put $$file $(notdir $$justfile); \
+	done
 	rm -rf $(DIST_DIR)/atr	
 
 endif
+#	atr $(DIST_DIR)/$(PROGRAM).atr put $(DATA_DIR)/$(MAP_FILE) $(MAP_FILE)
+# atr $(DIST_DIR)/$(PROGRAM).atr put $$file $(notdir $$file); \
 
 ################################################################
 # TESTING / EMULATOR
