@@ -2,12 +2,15 @@
 
 #include "graphics.h"
 #include "playfield.h"
+#include "player.h"
 
 #include <atari.h>
 #include <conio.h>
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 
 // Temp
 void load_map(void);
@@ -15,17 +18,21 @@ void load_map(void);
 // Defines
 #define GFX_9 0x40
 
-// Globals
-
 // Imports
 extern void display_list_anticF;
 extern void display_list_antic4;
+extern bool scroll_flag;                    // Defined in playfield_scroll.s
 extern graphics_state saved_graphics_state; // Defined in playfield_and_data.c
 extern uint8_t font[];                      // Defined in atari-small-4x8-COLOR1.h
 extern tile_struct row_zero[];              // Defined in playfield_and_data.c
 extern tile_struct row_one[];               // Defined in playfield_and_data.c
 extern tile_struct row_two[];               // Defined in playfield_and_data.c
 extern tile_struct row_three[];             // Defined in playfield_and_data.c
+extern uint8_t* playfield_lut[PLAYFIELD_ROWS*PLAYFIELD_TILES_ROWS];
+extern Player players[MAX_PLAYERS];
+
+// Globals
+uint16_t addr;
 
 void wait_for_start_input()
 {
@@ -100,18 +107,58 @@ void init_graphics()
     OS.color3 = 0x99;       // Playfield 3 color (maximum luminance)    // Blue
     OS.color4 = 0x00;       // Background color (black)
 
+    // Enable our scrolling vbi
+    enable_scroll_vbi();
+
     OS.sdmctl = 0x22;       // Enable ANTIC (normal playfield width)
-    //OS.sdmctl = 0x23;       // Enable ANTIC (wide playfield width)
-    ANTIC.hscrol = 0x0F;      // Set horizontal scroll to 0
+    //OS.sdmctl = 0x23;     // Enable ANTIC (wide playfield width)
+    //ANTIC.hscrol = 0x0F;    // Set horizontal scroll to 0
 }
 
 void render_frame()
 {
-    // Render the current frame
+    // The hardware is taking care of the rendering for us, so we just need to update the display list with the scrolling information.
+    // We move the playfield based on the player position.
+    // Don't do anything if the player is not moving.
+    if (players[PLAYER_ONE].pos.x != players[PLAYER_ONE].pos_prev.x || players[PLAYER_ONE].pos.y != players[PLAYER_ONE].pos_prev.y) {
+        scroll_flag = true; // Set the scroll flag to true, indicating that we need to update the display list
+    #if 0
+        uint16_t i;
+        uint8_t* dl = (uint8_t*)&display_list_antic4; // Pointer to the display list
+        //uint16_t addr;
+
+        // Update the display list with the new player position (fine scrolling using ANTIC registers)
+        ANTIC.vscrol = 0x0F - (uint8_t)(players[PLAYER_ONE].pos.y & 0x0F); // Vertical scroll based on player Y position
+        ANTIC.hscrol = 0x0F - (uint8_t)(players[PLAYER_ONE].pos.x & 0x0F); // Horizontal scroll based on player X position
+
+        // Course scrolling using the display list
+        // Update the display list with the new player position (course scrolling using the display list)
+        //addr = playfield_lut[players[PLAYER_ONE].pos.y >> 8] + (players[PLAYER_ONE].pos.x >> 8);
+        if (0 == players[PLAYER_ONE].pos.y & 0x0F) {
+            for (i = 0; i < PLAYFIELD_ROWS; ++i) {
+                addr = playfield_lut[(players[PLAYER_ONE].pos.y >> 4)+i];
+
+                // Update the display list with the new player position
+                // The playfield_lut is a lookup table for the playfield data
+                // We use the player position to determine which row to use
+                dl[i*3 + 4] = (uint8_t)(addr & 0xFF); // Set the low byte of the address
+                dl[i*3 + 5] = (uint8_t)((addr >> 4) & 0xFF); // Set the high byte of the address
+                //printf("%d|%d|%d|%04X:%02X  %02X|%02X  %02X\n", players[PLAYER_ONE].pos.y, i, (players[PLAYER_ONE].pos.y >> 4), addr, (uint8_t)(addr & 0xFF), (uint8_t)((addr >> 4) & 0xFF), dl[i*3 + 4], dl[i*3 + 5]); // Debugging output
+            }
+        }
+    #endif
+        players[PLAYER_ONE].pos_prev = players[PLAYER_ONE].pos; // Store the previous position
+    }
 }
 
 void shutdown_graphics()
 {
+    // Disable the scrolling VBI
+    disable_scroll_vbi();
+
+    // Disable ANTIC
+    OS.sdmctl = 0x00; // Disable ANTIC
+
     // Restore the starting graphics mode
     OS.chbas  = saved_graphics_state.chbas;  // Restore the original character base address
     OS.pcolr0 = saved_graphics_state.pcolr0; // Restore player-missile 0 color

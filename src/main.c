@@ -16,6 +16,12 @@ bool done = false;
 // Imports
 void main(void)
 {
+    // Initialize input handling
+    setup_input();
+
+    // Initialize the player data
+    init_player(0, 0); // Starting position for player one
+
     // Initialize graphics
     init_graphics();
 

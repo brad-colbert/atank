@@ -1,0 +1,20 @@
+// (C) 2025 Brad Colbert
+
+#include "player.h"
+
+// Globals
+uint8_t player_count = 1; // Start with one player
+extern Player players[MAX_PLAYERS];
+
+// Others will be updated by the network code
+void init_player(uint16_t x, uint16_t y)
+{
+    players[PLAYER_ONE].pos_prev.x = x;
+    players[PLAYER_ONE].pos_prev.y = y;
+    players[PLAYER_ONE].pos.x = x;
+    players[PLAYER_ONE].pos.y = y;
+    players[PLAYER_ONE].health = 100;
+    players[PLAYER_ONE].armor = 50;
+    players[PLAYER_ONE].ammo = 30;
+    players[PLAYER_ONE].score = 0;
+}
