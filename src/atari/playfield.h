@@ -23,4 +23,9 @@ typedef union playfield_block_s {
     row_playfield_struct rows[PLAYFIELD_ROWS]; // 160 * 24 bytes playfield data
 } playfield_block_struct;
 
+//  Defined in playfield_scroll.s
+void enable_scroll_vbi();
+void disable_scroll_vbi();
+void test_update_scroll();
+
 #endif // __PLAYFIELD_H__

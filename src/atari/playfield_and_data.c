@@ -3,6 +3,7 @@
 // This file defines the critical data that contains the playfield, player, and game data.
 #include <stdint.h>
 
+#include "player.h"
 #include "playfield.h"
 #include "player_missiles.h"
 #include "player_graphics_data.h"
