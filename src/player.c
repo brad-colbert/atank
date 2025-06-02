@@ -4,7 +4,7 @@
 
 // Globals
 uint8_t player_count = 1; // Start with one player
-extern Player players[MAX_PLAYERS];
+Player players[MAX_PLAYERS];
 
 // Others will be updated by the network code
 void init_player(int16_t x, int16_t y)
