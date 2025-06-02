@@ -68,6 +68,10 @@ addr_temp:    .word $0000 ; temporary address for display list update
 ;-----------------------------------------------------------------------------
 ; Starts calling tour scrolling routine during the blanking interval
 .proc _enable_scroll_vbi
+        lda #$FF
+        sta _scroll_flag             ; Set the scroll flag to indicate that scrolling is enabled
+
+
         ldy #<test_update_scroll   ; Low byte of the address of the scroll update routine
         ldx #>test_update_scroll   ; High byte of the address of the scroll update routine
         lda #6
