@@ -8,7 +8,6 @@ XITVBV = $E462
 SETVBV = $E45C
 SYSVBV = $E45F
 
-
 ; Imports
 .import _playfield_lut
 .import _display_list_antic4
@@ -18,11 +17,8 @@ SYSVBV = $E45F
 .export _disable_scroll_vbi
 .export _players
 .export _scroll_flag
-.export h_fs
-.export v_fs
 .export col
 .export row
-.export dl_index
 .export addr_temp
 
 ; Types
@@ -38,6 +34,7 @@ SYSVBV = $E45F
         score .word     ; Score of the player
 .endstruct
 
+; Data
 .segment "GAME_DATA2"
 _players: ; Array of players (4 players)
         player0: .tag Player
@@ -45,15 +42,10 @@ _players: ; Array of players (4 players)
         player2: .tag Player
         player3: .tag Player
 
-; Variables
 .zeropage
-
 _scroll_flag: .byte $FF ; flag to indicate if scroll is being updated
-h_fs:         .byte $0F ; horizontal fine scroll
-v_fs:         .byte $0F ; vertical fine scroll
 col:          .byte $00 ; column offset
 row:          .byte $00 ; row offset
-dl_index:     .byte $00 ; index for display list update
 addr_temp:    .word $0000 ; temporary address for display list update
 
 ; Macros
@@ -61,7 +53,6 @@ addr_temp:    .word $0000 ; temporary address for display list update
         LSR MEM+1       ;Shift the MSB
         ROR MEM+0       ;Rotate the LSB
 .endmacro
-
 
 .code
 
@@ -72,8 +63,8 @@ addr_temp:    .word $0000 ; temporary address for display list update
         sta _scroll_flag             ; Set the scroll flag to indicate that scrolling is enabled
 
 
-        ldy #<test_update_scroll   ; Low byte of the address of the scroll update routine
-        ldx #>test_update_scroll   ; High byte of the address of the scroll update routine
+        ldy #<update_scroll   ; Low byte of the address of the scroll update routine
+        ldx #>update_scroll   ; High byte of the address of the scroll update routine
         lda #6
         jsr SETVBV
         rts
@@ -92,13 +83,13 @@ addr_temp:    .word $0000 ; temporary address for display list update
 ;-----------------------------------------------------------------------------
 ; Wait for horizontal SYNChronization
 wsync:
-    sta WSYNC
-    rts
+        sta WSYNC
+        rts
 
 ;-----------------------------------------------------------------------------
 ; Performs the scroll update
-.export test_update_scroll  ; debug
-test_update_scroll:
+.export update_scroll  ; debug
+update_scroll:
         ; check to see if the x, y are being written, skip if so
         lda _scroll_flag
         beq @exit
@@ -165,99 +156,3 @@ test_update_scroll:
         lda #$00
         sta _scroll_flag             ; Clear the scroll flag
         jmp SYSVBV                   ; Call the system VBI routine
-
-update_scroll_OLD:
-
-        ; check to see if the x, y are being written, skip if so
-        lda _scroll_flag
-        bne @exit
-
-        ; Horizontal fine scroll
-@fine_scroll:
-        lda h_fs
-        sta HSCROL
-
-        ; Vertical fine scroll
-        lda v_fs
-        sta VSCROL
-
-; Here we are testing if we need to perform a course scroll by
-; comparing the calculated upper-left corner address to what is already
-; in the first entry of the display list.  If it's different, we need
-; to update everything.
-@test_course_update:
-        ; Calc LUT offset
-        lda row
-        asl          ; shift left (multiply by 2)
-        tax          ; moved index to X
-
-        ; Add the column offset to the address.  Store in a work var.
-        clc
-        lda _playfield_lut,x
-        adc col
-        sta addr_temp
-
-        inx
-        lda _playfield_lut,x
-        adc #$00
-        sta addr_temp+1       
-
-        ; Compare the LUT address at the row + col (offset) with the first address in _DISPLAY_LIST_ANTIC4
-        clc
-        lda addr_temp
-        cmp _display_list_antic4+4      ; LSB of 2nd number (4th byte is MSB of LSI address)
-        bne @course_scroll              ; There is a difference so let's update the display list
-        lda addr_temp+1
-        cmp _display_list_antic4+5      ; MSB of 2nd number (5th byte is LSB of LSI address
-        beq @exit
-
-; Perform course scroll by updating the display list.
-@course_scroll:
-        ldy #25
-        lda #04
-        sta dl_index
-
-        lda row
-        asl          ; shift left (multiply by 2)
-        tax          ; moved index to X
-
-        ; Add the column offset to the address read from the lut.  Store in a work var.
-@loop:  clc
-        lda _playfield_lut,x
-        adc col
-        sta addr_temp
-
-        inx
-        lda _playfield_lut,x
-        adc #$00
-        sta addr_temp+1       
-
-        ; Copy the work variable to the display list
-        ; save X
-        txa
-        pha
-
-        ; load dl offset into X
-        ldx dl_index
-
-        clc
-        lda addr_temp
-        sta _display_list_antic4,x      ; LSB of 2nd number (4th byte is MSB of LSI address)
-        inx
-        lda addr_temp+1
-        sta _display_list_antic4,x
-        inx
-        inx
-        stx dl_index  ; save current dl index
-
-        ; restore X to address lut index
-        pla
-        tax
-        inx  ; increment the lut index
-
-        dey
-        bne @loop
-
-        jsr wsync
-
-@exit:  jmp XITVBV
