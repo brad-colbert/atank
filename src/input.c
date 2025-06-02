@@ -63,8 +63,15 @@ void process_input()
         players[PLAYER_ONE].pos.x += 1;
     }
 
-    // if(joy_state) {
-    //     players[PLAYER_ONE].pos.x /= 8;
-    //     players[PLAYER_ONE].pos.y /= 8; // Scale down the position to match the game grid
-    // }
+    // Apply bounds checking to prevent the player from moving off-screen
+    if (players[PLAYER_ONE].pos.x < 0) {
+        players[PLAYER_ONE].pos.x = 0;
+    } else if (players[PLAYER_ONE].pos.x > 2560-640) {
+        players[PLAYER_ONE].pos.x = 2560-640;
+    }
+    if (players[PLAYER_ONE].pos.y < 0) {
+        players[PLAYER_ONE].pos.y = 0;
+    } else if (players[PLAYER_ONE].pos.y > 1536-384) { // Assuming a screen height of 192 pixels
+        players[PLAYER_ONE].pos.y = 1536-384;
+    }
 }

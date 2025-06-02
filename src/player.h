@@ -24,6 +24,6 @@ typedef struct _Player {
     uint8_t score;
 } Player;
 
-void init_player(uint16_t x, uint16_t y);
+void init_player(int16_t x, int16_t y);
 
 #endif // __PLAYER_H__

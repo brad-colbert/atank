@@ -48,8 +48,8 @@ _players: ; Array of players (4 players)
 ; Variables
 .zeropage
 
-_scroll_flag: .byte $00 ; flag to indicate if scroll is being updated
-h_fs:         .byte $07 ; horizontal fine scroll
+_scroll_flag: .byte $FF ; flag to indicate if scroll is being updated
+h_fs:         .byte $0F ; horizontal fine scroll
 v_fs:         .byte $0F ; vertical fine scroll
 col:          .byte $00 ; column offset
 row:          .byte $00 ; row offset
@@ -101,27 +101,35 @@ test_update_scroll:
 
         ; Get the fine scroll values
         lda player0 + Player::x_pos   ; Just get the last 4 bits of the x position for fine horizontal scroll
-        and #$0F                      ; Ensure it is in the range 0-7
+        and #$0F                      ; Ensure it is in the range 0-15
         eor #$0F                      ; 0x0F - x_pos & 0x0F
-        ;sta h_fs                     ; Store in horizontal fine scroll
-        ;lda #$0F
         sta HSCROL
 
         lda player0 + Player::y_pos   ; Just get the last 4 bits of the y position for fine vertical scroll
-        and #$0F                      ; Ensure it is in the range 0-7
-        eor #$0F                      ; 0x0F - x_pos & 0x0F
-        ;lda #$0F
+        and #$0F                      ; Ensure it is in the range 0-15
+        eor #$0F                      ; 0x0F - y_pos & 0x0F
         sta VSCROL
 
         ; Get the course scroll values
+        lda player0 + Player::x_pos     ; LSB
+        sta addr_temp
+        lda player0 + Player::x_pos + 1 ; MSB
+        sta addr_temp + 1
+        lsr16 addr_temp              ; Shift right to get the row offset, 4 shifts is /16
+        lsr16 addr_temp              ; Shift right to get the row offset
+        lsr16 addr_temp              ; Shift right to get the row offset
+        lsr16 addr_temp              ; Shift right to get the row offset
+        lda addr_temp                ; Should only be one byte (0 - 80)
+        sta col                      ; Store the column offset
+
         lda player0 + Player::y_pos     ; LSB
         sta addr_temp
         lda player0 + Player::y_pos + 1 ; MSB
         sta addr_temp + 1
-        lsr16 addr_temp              ; Shift right to get the column offset, 4 shifts is /16
-        lsr16 addr_temp              ; Shift right to get the column offset
-        lsr16 addr_temp              ; Shift right to get the column offset
-        lsr16 addr_temp              ; Shift right to get the column offset
+        lsr16 addr_temp              ; Shift right to get the row offset, 4 shifts is /16
+        lsr16 addr_temp              ; Shift right to get the row offset
+        lsr16 addr_temp              ; Shift right to get the row offset
+        lsr16 addr_temp              ; Shift right to get the row offset
         lda addr_temp                ; Should only be one byte (0 - 24*4)
         asl                          ; Shift left to multiply by 2 (each entry in the LUT is 2 bytes)
         tay                          ; Store the row offset in Y
@@ -132,9 +140,12 @@ test_update_scroll:
         ldx #4                       ; Start at byte 4 of the display list (the first entry is the ANTIC mode, the second is the LSI address)
 @loop:
         ; Get the LUT address for the current row
+        clc
         lda _playfield_lut,y         ; Get the address of the playfield for the row
+        adc col                      ; Add the column offset to the address
         sta _display_list_antic4,x   ; Copy the address to the display list LSB
         lda _playfield_lut+1,y       ; Get the MSB of the address of the playfield for the row
+        adc #$00                     ; Add 0 to the MSB (if carry)
         sta _display_list_antic4+1,x ; Copy the address to the display list MSB
 
         inx

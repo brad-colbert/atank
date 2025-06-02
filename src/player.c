@@ -7,7 +7,7 @@ uint8_t player_count = 1; // Start with one player
 extern Player players[MAX_PLAYERS];
 
 // Others will be updated by the network code
-void init_player(uint16_t x, uint16_t y)
+void init_player(int16_t x, int16_t y)
 {
     players[PLAYER_ONE].pos_prev.x = x;
     players[PLAYER_ONE].pos_prev.y = y;
