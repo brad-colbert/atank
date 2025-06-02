@@ -15,38 +15,42 @@ SYSVBV = $E45F
 ; Exports
 .export _enable_scroll_vbi
 .export _disable_scroll_vbi
-.export _players
+;.export _players
 .export _scroll_flag
-.export col
-.export row
-.export addr_temp
+.export _x_pos_shadow
+.export _y_pos_shadow
+.export col        ; exported for debug
+.export row        ; exported for debug
+.export addr_temp  ; exported for debug
 
 ; Types
-.struct Player
-        x_pos_prev .word
-        y_pos_prev .word
-        x_pos .word
-        y_pos .word
-        direction .byte ; 0: up, 1: up-right, 2: right, 3: down-right, 4: down, 5: down-left, 6: left, 7: up-left
-        health .byte    ; Health of the player
-        armor .byte     ; Armor of the player
-        ammo .byte      ; Ammo of the player
-        score .word     ; Score of the player
-.endstruct
+;.struct Player
+;        x_pos_prev .word
+;        y_pos_prev .word
+;        x_pos .word
+;        y_pos .word
+;        direction .byte ; 0: up, 1: up-right, 2: right, 3: down-right, 4: down, 5: down-left, 6: left, 7: up-left
+;        health .byte    ; Health of the player
+;        armor .byte     ; Armor of the player
+;        ammo .byte      ; Ammo of the player
+;        score .word     ; Score of the player
+;.endstruct
 
 ; Data
-.segment "GAME_DATA2"
-_players: ; Array of players (4 players)
-        player0: .tag Player
-        player1: .tag Player
-        player2: .tag Player
-        player3: .tag Player
+;.segment "GAME_DATA2"
+;_players: ; Array of players (4 players)
+;        player0: .tag Player
+;        player1: .tag Player
+;        player2: .tag Player
+;        player3: .tag Player
 
 .zeropage
-_scroll_flag: .byte $FF ; flag to indicate if scroll is being updated
-col:          .byte $00 ; column offset
-row:          .byte $00 ; row offset
-addr_temp:    .word $0000 ; temporary address for display list update
+_scroll_flag:  .byte $FF ; flag to indicate if scroll is being updated
+_x_pos_shadow: .word $00 ; shadow for x position
+_y_pos_shadow: .word $00 ; shadow for y position
+col:           .byte $00 ; column offset
+row:           .byte $00 ; row offset
+addr_temp:     .word $0000 ; temporary address for display list update
 
 ; Macros
 .macro lsr16 MEM
@@ -95,20 +99,20 @@ update_scroll:
         beq @exit
 
         ; Get the fine scroll values
-        lda player0 + Player::x_pos   ; Just get the last 4 bits of the x position for fine horizontal scroll
+        lda _x_pos_shadow   ; Just get the last 4 bits of the x position for fine horizontal scroll
         and #$0F                      ; Ensure it is in the range 0-15
         eor #$0F                      ; 0x0F - x_pos & 0x0F
         sta HSCROL
 
-        lda player0 + Player::y_pos   ; Just get the last 4 bits of the y position for fine vertical scroll
+        lda _y_pos_shadow   ; Just get the last 4 bits of the y position for fine vertical scroll
         and #$0F                      ; Ensure it is in the range 0-15
         eor #$0F                      ; 0x0F - y_pos & 0x0F
         sta VSCROL
 
         ; Get the course scroll values
-        lda player0 + Player::x_pos     ; LSB
+        lda _x_pos_shadow     ; LSB
         sta addr_temp
-        lda player0 + Player::x_pos + 1 ; MSB
+        lda _x_pos_shadow + 1 ; MSB
         sta addr_temp + 1
         lsr16 addr_temp              ; Shift right to get the row offset, 4 shifts is /16
         lsr16 addr_temp              ; Shift right to get the row offset
@@ -117,9 +121,9 @@ update_scroll:
         lda addr_temp                ; Should only be one byte (0 - 80)
         sta col                      ; Store the column offset
 
-        lda player0 + Player::y_pos     ; LSB
+        lda _y_pos_shadow     ; LSB
         sta addr_temp
-        lda player0 + Player::y_pos + 1 ; MSB
+        lda _y_pos_shadow + 1 ; MSB
         sta addr_temp + 1
         lsr16 addr_temp              ; Shift right to get the row offset, 4 shifts is /16
         lsr16 addr_temp              ; Shift right to get the row offset
@@ -152,7 +156,7 @@ update_scroll:
         cpy row                      ; Check if we have processed all 24 rows (0-23)
         bmi @loop                    ; If Y <= row, continue the loop
 
-@exit:
         lda #$00
         sta _scroll_flag             ; Clear the scroll flag
+@exit:
         jmp SYSVBV                   ; Call the system VBI routine

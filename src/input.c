@@ -66,12 +66,12 @@ void process_input()
     // Apply bounds checking to prevent the player from moving off-screen
     if (players[PLAYER_ONE].pos.x < 0) {
         players[PLAYER_ONE].pos.x = 0;
-    } else if (players[PLAYER_ONE].pos.x > 2560-640) {
-        players[PLAYER_ONE].pos.x = 2560-640;
+    } else if (players[PLAYER_ONE].pos.x > 2559-640) {
+        players[PLAYER_ONE].pos.x = 2559-640;
     }
     if (players[PLAYER_ONE].pos.y < 0) {
         players[PLAYER_ONE].pos.y = 0;
     } else if (players[PLAYER_ONE].pos.y > 1536-384) { // Assuming a screen height of 192 pixels
-        players[PLAYER_ONE].pos.y = 1536-384;
+        players[PLAYER_ONE].pos.y = 1535-384;
     }
 }
