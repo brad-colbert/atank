@@ -122,8 +122,8 @@ void render_frame()
     // The hardware is taking care of the rendering for us, so we just need to update the display list with the scrolling information.
     // We move the playfield based on the player position.
     // Don't do anything if the player is not moving.
-    if (players[PLAYER_ONE].pos.x != players[PLAYER_ONE].pos_prev.x || players[PLAYER_ONE].pos.y != players[PLAYER_ONE].pos_prev.y) {
-        if(!scroll_flag) {
+    if(!scroll_flag) {
+        if (players[PLAYER_ONE].pos.x != players[PLAYER_ONE].pos_prev.x || players[PLAYER_ONE].pos.y != players[PLAYER_ONE].pos_prev.y) {
             x_pos_shadow = players[PLAYER_ONE].pos.x; // Store the current x position
             y_pos_shadow = players[PLAYER_ONE].pos.y; // Store the current y position
 

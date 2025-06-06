@@ -45,12 +45,12 @@ SYSVBV = $E45F
 ;        player3: .tag Player
 
 .zeropage
-_scroll_flag:  .byte $FF ; flag to indicate if scroll is being updated
-_x_pos_shadow: .word $00 ; shadow for x position
-_y_pos_shadow: .word $00 ; shadow for y position
-col:           .byte $00 ; column offset
-row:           .byte $00 ; row offset
-addr_temp:     .word $0000 ; temporary address for display list update
+_scroll_flag:  .byte 0; flag to indicate if scroll is being updated
+_x_pos_shadow: .word 0 ; shadow for x position
+_y_pos_shadow: .word 0 ; shadow for y position
+col:           .byte 0 ; column offset
+row:           .byte 0 ; row offset
+addr_temp:     .word 0 ; temporary address for display list update
 
 ; Macros
 .macro lsr16 MEM
@@ -61,7 +61,7 @@ addr_temp:     .word $0000 ; temporary address for display list update
 .code
 
 ;-----------------------------------------------------------------------------
-; Starts calling tour scrolling routine during the blanking interval
+; Starts calling our scrolling routine during the blanking interval
 .proc _enable_scroll_vbi
         lda #$FF
         sta _scroll_flag             ; Set the scroll flag to indicate that scrolling is enabled
@@ -100,13 +100,14 @@ update_scroll:
 
         ; Get the fine scroll values
         lda _x_pos_shadow   ; Just get the last 4 bits of the x position for fine horizontal scroll
-        and #$0F                      ; Ensure it is in the range 0-15
+        and #$03                      ; Ensure it is in the range 0-15
         eor #$0F                      ; 0x0F - x_pos & 0x0F
+        ; adc #12
         sta HSCROL
 
         lda _y_pos_shadow   ; Just get the last 4 bits of the y position for fine vertical scroll
-        and #$0F                      ; Ensure it is in the range 0-15
-        eor #$0F                      ; 0x0F - y_pos & 0x0F
+        and #$07                      ; Ensure it is in the range 0-15
+        ;eor #$07                      ; 0x0F - y_pos & 0x0F
         sta VSCROL
 
         ; Get the course scroll values
@@ -116,8 +117,8 @@ update_scroll:
         sta addr_temp + 1
         lsr16 addr_temp              ; Shift right to get the row offset, 4 shifts is /16
         lsr16 addr_temp              ; Shift right to get the row offset
-        lsr16 addr_temp              ; Shift right to get the row offset
-        lsr16 addr_temp              ; Shift right to get the row offset
+        ;lsr16 addr_temp              ; Shift right to get the row offset
+        ;lsr16 addr_temp              ; Shift right to get the row offset
         lda addr_temp                ; Should only be one byte (0 - 80)
         sta col                      ; Store the column offset
 
@@ -128,7 +129,7 @@ update_scroll:
         lsr16 addr_temp              ; Shift right to get the row offset, 4 shifts is /16
         lsr16 addr_temp              ; Shift right to get the row offset
         lsr16 addr_temp              ; Shift right to get the row offset
-        lsr16 addr_temp              ; Shift right to get the row offset
+        ;lsr16 addr_temp              ; Shift right to get the row offset
         lda addr_temp                ; Should only be one byte (0 - 24*4)
         asl                          ; Shift left to multiply by 2 (each entry in the LUT is 2 bytes)
         tay                          ; Store the row offset in Y
