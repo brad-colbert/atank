@@ -101,13 +101,11 @@ update_scroll:
         ; Get the fine scroll values
         lda _x_pos_shadow   ; Just get the last 4 bits of the x position for fine horizontal scroll
         and #$03                      ; Ensure it is in the range 0-15
-        eor #$0F                      ; 0x0F - x_pos & 0x0F
-        ; adc #12
+        eor #$0F                      ; 0x0F - x_pos & 0x0F    F - pos becasue when HSCROL is enabled, scroll is inverted compared to our situation and there are buffer pixels.
         sta HSCROL
 
         lda _y_pos_shadow   ; Just get the last 4 bits of the y position for fine vertical scroll
         and #$07                      ; Ensure it is in the range 0-15
-        ;eor #$07                      ; 0x0F - y_pos & 0x0F
         sta VSCROL
 
         ; Get the course scroll values
@@ -115,10 +113,8 @@ update_scroll:
         sta addr_temp
         lda _x_pos_shadow + 1 ; MSB
         sta addr_temp + 1
-        lsr16 addr_temp              ; Shift right to get the row offset, 4 shifts is /16
+        lsr16 addr_temp              ; Shift right to get the row offset, 2 shifts is /4
         lsr16 addr_temp              ; Shift right to get the row offset
-        ;lsr16 addr_temp              ; Shift right to get the row offset
-        ;lsr16 addr_temp              ; Shift right to get the row offset
         lda addr_temp                ; Should only be one byte (0 - 80)
         sta col                      ; Store the column offset
 
@@ -126,14 +122,13 @@ update_scroll:
         sta addr_temp
         lda _y_pos_shadow + 1 ; MSB
         sta addr_temp + 1
-        lsr16 addr_temp              ; Shift right to get the row offset, 4 shifts is /16
+        lsr16 addr_temp              ; Shift right to get the row offset, 3 shifts is /8
         lsr16 addr_temp              ; Shift right to get the row offset
         lsr16 addr_temp              ; Shift right to get the row offset
-        ;lsr16 addr_temp              ; Shift right to get the row offset
         lda addr_temp                ; Should only be one byte (0 - 24*4)
         asl                          ; Shift left to multiply by 2 (each entry in the LUT is 2 bytes)
         tay                          ; Store the row offset in Y
-        adc #48                      ; Add 24*2 (2 bytes per entry in the LUT) to the row offset to get the last row to lookup
+        adc #50                      ; Add 24*2 (2 bytes per entry in the LUT) to the row offset to get the last row to lookup
         sta row                      ; Store the last row to lookup.  Used for the loop below.
 
         ; Iterate over the playfield LUT starting at row.

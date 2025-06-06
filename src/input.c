@@ -11,6 +11,7 @@ extern Player players[MAX_PLAYERS];
 extern uint32_t time_millis;
 
 // Globals
+// REMOVE THIS CODE.  HERE TO TEST JOYSTICK INPUT AND TIME KEEPING
 uint32_t start_time = 0x12345678; // Initialize to a non-zero value to avoid uninitialized access
 uint32_t delta_t; // Calculate the time since the last input processing
 int16_t x_dir = 1;
@@ -21,6 +22,7 @@ void setup_input()
     // Initialize the joystick
     joy_install(joy_static_stddrv);
 
+    // REMOVE THIS CODE.  HERE TO TEST JOYSTICK INPUT AND TIME KEEPING
     get_time_millis(); // Store the start time in milliseconds
     start_time = time_millis; // Initialize the start time
 }
@@ -30,6 +32,8 @@ void setup_input()
 // In development, at least for now, the motion mechanics will be simple but we will be moving to a dynamic model (velocity, acceleration, etc.) later on.
 void process_input()
 {  
+    // REMOVE THIS CODE.  HERE TO TEST TIME KEEPING
+    #if 0
     get_time_millis(); // Store the start time in milliseconds
     delta_t = time_millis - start_time; // Calculate the time since the last input processing
 
@@ -41,10 +45,33 @@ void process_input()
         start_time = time_millis; // Update the start time
     }
 
-
-    #if 0
+    // Apply bounds checking to prevent the player from moving off-screen
+    if (players[PLAYER_ONE].pos.x < (int16_t)0) {
+        players[PLAYER_ONE].pos.x = (int16_t)0;
+        x_dir = 0;
+        y_dir = -1;
+    } else if (players[PLAYER_ONE].pos.x > (int16_t)(40*4*3-1)) { //2559-640) {
+        players[PLAYER_ONE].pos.x = (int16_t)(40*4*3-1); //2559-640;
+        x_dir = 0;
+        y_dir = 1;
+    }
+    if (players[PLAYER_ONE].pos.y < (int16_t)0) {
+        players[PLAYER_ONE].pos.y = (int16_t)0;
+        x_dir = 1;
+        y_dir = 0;
+    } else if (players[PLAYER_ONE].pos.y > (int16_t)(24 * 8 * 3)) {//(int16_t)1535-384) { // Assuming a screen height of 192 pixels
+        players[PLAYER_ONE].pos.y = (int16_t)(24 * 8 * 3); //(int16_t)1535-384;
+        x_dir = -1;
+        y_dir = 0;
+    }
+    #else
     uint8_t joy_state = joy_read(JOY_1);
 
+    // REMOVE THIS CODE.  HERE TO TEST JOYSTICK INPUT AND TIME KEEPING
+    get_time_millis(); // Store the start time in milliseconds
+    delta_t = time_millis - start_time; // Calculate the time since the last input processing
+
+    if (delta_t > (uint32_t)1) { // If less than 100 milliseconds, skip processing
     // Check joystick input
     if (JOY_UP(joy_state)) {
         //players[PLAYER_ONE].pos_prev = players[PLAYER_ONE].pos; // Store previous position
@@ -86,25 +113,19 @@ void process_input()
         players[PLAYER_ONE].direction = 2; // Right
         players[PLAYER_ONE].pos.x += 1;
     }
+        start_time = time_millis; // Update the start time
+    }
     #endif
 
     // Apply bounds checking to prevent the player from moving off-screen
     if (players[PLAYER_ONE].pos.x < (int16_t)0) {
         players[PLAYER_ONE].pos.x = (int16_t)0;
-        x_dir = 0;
-        y_dir = -1;
-    } else if (players[PLAYER_ONE].pos.x > (int16_t)(40*4*3-1)) { //2559-640) {
-        players[PLAYER_ONE].pos.x = (int16_t)(40*4*3-1); //2559-640;
-        x_dir = 0;
-        y_dir = 1;
+    } else if (players[PLAYER_ONE].pos.x > (int16_t)(40*4*3-1)) {
+        players[PLAYER_ONE].pos.x = (int16_t)(40*4*3-1);
     }
     if (players[PLAYER_ONE].pos.y < (int16_t)0) {
         players[PLAYER_ONE].pos.y = (int16_t)0;
-        x_dir = 1;
-        y_dir = 0;
-    } else if (players[PLAYER_ONE].pos.y > (int16_t)(24 * 8 * 3)) {//(int16_t)1535-384) { // Assuming a screen height of 192 pixels
-        players[PLAYER_ONE].pos.y = (int16_t)(24 * 8 * 3); //(int16_t)1535-384;
-        x_dir = -1;
-        y_dir = 0;
+    } else if (players[PLAYER_ONE].pos.y > (int16_t)(24 * 8 * 3)) {
+        players[PLAYER_ONE].pos.y = (int16_t)(24 * 8 * 3);
     }
 }
