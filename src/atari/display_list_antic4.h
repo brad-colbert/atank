@@ -46,7 +46,7 @@ void display_list_antic4 =
     DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[22],
     DL_LMS(DL_VSCROL(DL_HSCROL(DL_CHR40x8x4))),  &row_zero.rows[23], // Ln 24,  75 bytes
 
-    //DL_LMS(DL_HSCROL(DL_CHR40x8x4)),  &row_one.rows[0],              // Buffer Ln 25,  75 bytes
+    DL_LMS(DL_HSCROL(DL_CHR40x8x4)),  &row_one.rows[0],              // Buffer Ln 25,  75 bytes
 
     DL_JVB, &display_list_antic4,                                                 // 78 bytes
 
