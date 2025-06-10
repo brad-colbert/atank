@@ -3,6 +3,9 @@
 #include "graphics.h"
 #include "playfield.h"
 #include "player.h"
+#include "player_missiles.h"
+#include "player_graphics_data.h"
+#include "memory.h"
 
 #include <atari.h>
 #include <conio.h>
@@ -23,18 +26,24 @@ extern void display_list_anticF;
 extern void display_list_antic4;
 extern graphics_state saved_graphics_state; // Defined in playfield_and_data.c
 extern uint8_t font[];                      // Defined in atari-small-4x8-COLOR1.h
-extern tile_struct row_zero[];              // Defined in playfield_and_data.c
-extern tile_struct row_one[];               // Defined in playfield_and_data.c
-extern tile_struct row_two[];               // Defined in playfield_and_data.c
-extern tile_struct row_three[];             // Defined in playfield_and_data.c
+extern playfield_block_struct row_zero;              // Defined in playfield_and_data.c
+extern playfield_block_struct row_one;               // Defined in playfield_and_data.c
+extern playfield_block_struct row_two;               // Defined in playfield_and_data.c
+extern playfield_block_struct row_three;             // Defined in playfield_and_data.c
 extern uint8_t* playfield_lut[PLAYFIELD_ROWS*PLAYFIELD_TILES_ROWS];
+extern uint8_t player_count;                // Defined in player.c 
 extern Player players[MAX_PLAYERS];
 extern bool scroll_flag;                    // Defined in playfield_scroll.s
 extern int16_t x_pos_shadow;
 extern int16_t y_pos_shadow;
+extern PlayerImageData player_0_image_data; // Defined in player_graphics_data.h
+extern PlayerMissiles player_missiles;      // Defined in player_missiles.h
+extern uint8_t pm_x_coord_map[]; // Defined in player_missiles.c
+extern uint8_t pm_y_coord_map[]; // Defined in player_missiles.c
 
 // Globals
 uint16_t addr;
+uint16_t coord = 0;
 
 void wait_for_start_input()
 {
@@ -55,7 +64,10 @@ void show_logo_splash()
 
 void init_graphics()
 {
-    //int i;    // Temp
+    //#define TESTING
+    #ifdef TESTING
+    uint8_t row, col;
+    #endif
 
     saved_graphics_state.sdmctl = OS.sdmctl; // Save the current SDMCTL register state
     saved_graphics_state.sdlist = (void*)0xbc20;    // Basic was enabled... need to do something different.  OS.sdlst;  // Save the current display list
@@ -77,20 +89,15 @@ void init_graphics()
     
     // Disable ANTIC while we clear the playfield memory
     OS.sdmctl = 0x00; // Disable ANTIC 
-    memset(row_zero,  0x00, sizeof(playfield_block_struct)); // Clear row zero playfield data
-    memset(row_one,   0x00, sizeof(playfield_block_struct)); // Clear row one playfield data
-    memset(row_two,   0x00, sizeof(playfield_block_struct)); // Clear row two playfield data
-    memset(row_three, 0x00, sizeof(playfield_block_struct)); // Clear row three playfield data
+    memset(&row_zero,  0x00, sizeof(playfield_block_struct)); // Clear row zero playfield data
+    memset(&row_one,   0x00, sizeof(playfield_block_struct)); // Clear row one playfield data
+    memset(&row_two,   0x00, sizeof(playfield_block_struct)); // Clear row two playfield data
+    memset(&row_three, 0x00, sizeof(playfield_block_struct)); // Clear row three playfield data
+
     load_map(); // Load the playfield map data
-    //cgetc(); // Wait for a key press
 
     // Use our font for color text
     OS.chbas = (uint8_t)((uintptr_t)font >> 8); // Set the character base address to our font
-
-    // Temp
-    //memset((void*)0xE000, 0xAA, 128); // Clear row three playfield data
-    //for(i=0; i<256; ++i)
-    //    row_zero[0].data[0%40][i] = i; // Clear the first tile in row zero
 
     // Change to ANTIC 4
     OS.sdlst = &display_list_antic4;         // Set the display list to ANTIC 4 mode
@@ -114,24 +121,135 @@ void init_graphics()
 
     OS.sdmctl = 0x22;       // Enable ANTIC (normal playfield width)
     //OS.sdmctl = 0x23;     // Enable ANTIC (wide playfield width)
-    //ANTIC.hscrol = 0x0F;    // Set horizontal scroll to 0
+
+    // Setup the player missiles
+    init_player_missiles();
+
+    #ifdef TESTING
+    for(row = 1; row < 23; row++) {
+        row_zero.rows[row].cols[0] = ('0'-32) + row%10; // Set the first column to the row number
+        if(row % 2)
+            row_zero.rows[row].cols[19] = ('0'-32) + 9;
+    }
+    for(col = 1; col < 39; col++) {
+        // Set the playfield tile data
+        row_zero.rows[0].cols[col] = ('0'-32) + col%10; // Set the first row to the column number
+        if(col % 2)
+            row_zero.rows[11].cols[col] = ('0'-32) + 1;
+    }
+    row_zero.rows[11].cols[20] = 0; // blank
+    row_zero.rows[11].cols[19] = '8'; // X
+    #endif
+
+    // Force an update of the playfield
+    scroll_flag = false; // Set the scroll flag to false
+    x_pos_shadow = 0; // Move the playfield in X
+    y_pos_shadow = 0; // Store the current y position
+    scroll_flag = true; // Set the scroll flag to true, indicating that we need to update the display list
 }
 
 void render_frame()
 {
+    #ifdef TESTING
+
+    // Set the playfield tile data for row one
+    #define PMG_W_H 8
+    // UL
+    #define PMG_X 47 //(55-PMG_W_H)
+    #define PMG_Y 32 //(40-PMG_W_H)
+    // Center
+    // #define PMG_X 121 //(129-PMG_W_H)
+    // #define PMG_Y 120 //(128-PMG_W_H)
+    // LR
+    // #define PMG_X 199 //(211-PMG_W_H)
+    // #define PMG_Y 224 //(224-PMG_W_H)
+    GTIA_WRITE.hposp0 = PMG_X;
+    //memcpy(&(player_missiles.player0[PMG_XY]), player_0_image_data.base_images[2], 8);
+    player_missiles.player0[PMG_Y+0] = 0xA5;
+    player_missiles.player0[PMG_Y+1] = 0x42;
+    player_missiles.player0[PMG_Y+2] = 0xA5;
+    player_missiles.player0[PMG_Y+3] = 0x00; //E7;
+    player_missiles.player0[PMG_Y+4] = 0x00; //E7;
+    player_missiles.player0[PMG_Y+5] = 0xA5;
+    player_missiles.player0[PMG_Y+6] = 0x42;
+    player_missiles.player0[PMG_Y+7] = 0xA5;
+    #else
+    //int coord = pm_y_coord_map[128];
+
     // The hardware is taking care of the rendering for us, so we just need to update the display list with the scrolling information.
     // We move the playfield based on the player position.
     // Don't do anything if the player is not moving.
     if(!scroll_flag) {
+        // We update the players previous position here so that we don't spend idle time updating the display list.
         if (players[PLAYER_ONE].pos.x != players[PLAYER_ONE].pos_prev.x || players[PLAYER_ONE].pos.y != players[PLAYER_ONE].pos_prev.y) {
-            x_pos_shadow = players[PLAYER_ONE].pos.x; // Store the current x position
-            y_pos_shadow = players[PLAYER_ONE].pos.y; // Store the current y position
 
-            players[PLAYER_ONE].pos_prev = players[PLAYER_ONE].pos; // Store the previous position
+            // if (players[PLAYER_ONE].pos.x > 603) { //(40 * 8 * 3 + 128)) ){
+            //     coord = (players[PLAYER_ONE].pos.x - 604) + 128; // Get the x position
+            #define X_LIMIT (40 * 4 * 3)
+            if (players[PLAYER_ONE].pos.x > X_LIMIT + 80) { //(40 * 8 * 3 + 128)) ){
+                coord = players[PLAYER_ONE].pos.x - X_LIMIT; // Get the x position
+                coord = pm_x_coord_map[coord]; // Get the x position from the map
+                GTIA_WRITE.hposp0 = coord; // Set horizontal position for player 0
+            }
+            else if (players[PLAYER_ONE].pos.x < 80) { //(40 * 8 * 3 + 128)) ){
+                coord = players[PLAYER_ONE].pos.x & 0xFF; // Get the x position
+                coord = pm_x_coord_map[coord]; // Get the x position from the map
+                GTIA_WRITE.hposp0 = coord; // Set horizontal position for player 0
+            }
+            else {
+                x_pos_shadow = players[PLAYER_ONE].pos.x - 80; // Move the playfield in X
+            }
+
+            #define Y_LIMIT (24 * 8 * 3)
+            if (players[PLAYER_ONE].pos.y > Y_LIMIT + 95) {
+                coord = (players[PLAYER_ONE].pos_prev.y - Y_LIMIT); // Get the y position
+                coord = pm_y_coord_map[coord]; // Get the y position from the map
+                player_missiles.player0[coord-1] = 0x00; // Clear the previous player graphics
+                player_missiles.player0[coord+0] = 0x00; // Clear the previous player graphics
+                // player_missiles.player0[coord+1] = 0x00; // Clear the previous player graphics
+                // player_missiles.player0[coord+2] = 0x00; // Clear the previous player graphics
+                // player_missiles.player0[coord+3] = 0x00; // Clear the previous player graphics
+                // player_missiles.player0[coord+4] = 0x00; // Clear the previous player graphics
+                // player_missiles.player0[coord+5] = 0x00; // Clear the previous player graphics
+                // player_missiles.player0[coord+6] = 0x00; // Clear the previous player graphics
+                player_missiles.player0[coord+7] = 0x00; // Clear the previous player graphics
+                player_missiles.player0[coord+8] = 0x00; // Clear the previous player graphics
+
+                coord = (players[PLAYER_ONE].pos.y - Y_LIMIT); // Get the x position
+                coord = pm_y_coord_map[coord]; // Get the x position from the map
+            }
+            else if (players[PLAYER_ONE].pos.y < 97) {
+                // Clear the previous player graphics
+                coord = players[PLAYER_ONE].pos_prev.y & 0x7F; // Get the y position
+                coord = pm_y_coord_map[coord]; // Get the y position from the map
+                player_missiles.player0[coord-1] = 0x00; // Clear the previous player graphics
+                player_missiles.player0[coord+0] = 0x00; // Clear the previous player graphics
+                // player_missiles.player0[coord+1] = 0x00; // Clear the previous player graphics
+                // player_missiles.player0[coord+2] = 0x00; // Clear the previous player graphics
+                // player_missiles.player0[coord+3] = 0x00; // Clear the previous player graphics
+                // player_missiles.player0[coord+4] = 0x00; // Clear the previous player graphics
+                // player_missiles.player0[coord+5] = 0x00; // Clear the previous player graphics
+                // player_missiles.player0[coord+6] = 0x00; // Clear the previous player graphics
+                player_missiles.player0[coord+7] = 0x00; // Clear the previous player graphics
+                player_missiles.player0[coord+8] = 0x00; // Clear the previous player graphics
+
+                coord = players[PLAYER_ONE].pos.y & 0x7F; // Get the y position
+                coord = pm_y_coord_map[coord]; // Get the y position from the map
+            }
+            else {
+                y_pos_shadow = players[PLAYER_ONE].pos.y - 96; // Store the current y position
+                coord = pm_y_coord_map[96]; // Get the y position from the map
+            }
+
+            memcpy(&(player_missiles.player0[coord]), player_0_image_data.base_images[players[PLAYER_ONE].direction], 8);
+
+            players[PLAYER_ONE].pos_prev = players[PLAYER_ONE].pos;             // Update the previous position
+            players[PLAYER_ONE].direction_prev = players[PLAYER_ONE].direction; // Update the previous direction
             
             scroll_flag = true; // Set the scroll flag to true, indicating that we need to update the display list
         }
     }
+    #endif
 }
 
 void shutdown_graphics()
@@ -141,6 +259,8 @@ void shutdown_graphics()
 
     // Disable ANTIC
     OS.sdmctl = 0x00; // Disable ANTIC
+
+    disable_player_missiles(); // Disable player missiles
 
     // Restore the starting graphics mode
     OS.chbas  = saved_graphics_state.chbas;  // Restore the original character base address

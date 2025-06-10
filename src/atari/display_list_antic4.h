@@ -48,7 +48,7 @@ void display_list_antic4 =
 
     DL_LMS(DL_HSCROL(DL_CHR40x8x4)),  &row_one.rows[0],              // Buffer Ln 25,  75 bytes
 
-    DL_JVB, &display_list_antic4,                                                 // 78 bytes
+    DL_JVB, &display_list_antic4 /*,                                                 // 78 bytes
 
     // A bunch of blanks to fill the rest of the display list memory (to 256 bytes)
     DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8,   // 79-88
@@ -68,7 +68,7 @@ void display_list_antic4 =
     DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8,   // 179-228
     DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8,   // 179-238
     DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8,   // 179-248
-    DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8                                                 // 179-255
+    DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8, DL_BLK8                                                 // 179-255 */
 };
 
 #endif // __DISPLAY_LIST_ANTIC4_H__

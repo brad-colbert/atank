@@ -1,5 +1,8 @@
 ; (C) 2025 Brad Colbert
 
+; Includes
+.include "memory.inc"
+
 ; Constants
 HSCROL = $D404
 VSCROL = $D405
@@ -45,18 +48,12 @@ SYSVBV = $E45F
 ;        player3: .tag Player
 
 .zeropage
-_scroll_flag:  .byte 0; flag to indicate if scroll is being updated
-_x_pos_shadow: .word 0 ; shadow for x position
-_y_pos_shadow: .word 0 ; shadow for y position
-col:           .byte 0 ; column offset
-row:           .byte 0 ; row offset
-addr_temp:     .word 0 ; temporary address for display list update
-
-; Macros
-.macro lsr16 MEM
-        LSR MEM+1       ;Shift the MSB
-        ROR MEM+0       ;Rotate the LSB
-.endmacro
+_scroll_flag:  .byte $00   ; flag to indicate if scroll is being updated
+_x_pos_shadow: .word $0000 ; shadow for x position
+_y_pos_shadow: .word $0000 ; shadow for y position
+col:           .byte $00   ; column offset
+row:           .byte $00   ; row offset
+addr_temp:     .word $0000 ; temporary address for display list update
 
 .code
 

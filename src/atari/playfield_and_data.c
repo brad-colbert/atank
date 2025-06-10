@@ -18,21 +18,24 @@
 PlayerMissiles player_missiles;
 #pragma bss-name (pop)
 
-// The gameplay display list is tucked into the empty 256 bytes in the player missile segment.
+// The gameplay display list is tucked into the empty 768 bytes in the player missile segment.
 #pragma data-name (push,"DISPLAYLIST")
 #include "display_list_antic4.h"
 #pragma data-name (pop)
 
+// The player graphics data is defined in player_graphics_data.h
+/* Defined in player_graphics_data.s
 #pragma bss-name (push,"PLAYER_IMAGES0")
-PlayerGraphics player0_graphics;
-PlayerGraphics player1_graphics;
+PlayerImageData player0_graphics;
+PlayerImageData player1_graphics;
 #pragma bss-name (pop)
 
+// The player graphics data is defined in player_graphics_data.h
 #pragma bss-name (push,"PLAYER_IMAGES1")
-PlayerGraphics player2_graphics;
-PlayerGraphics player3_graphics;
+PlayerImageData player2_graphics;
+PlayerImageData player3_graphics;
 #pragma bss-name (pop)
-
+*/
 #pragma bss-name (push,"PLAYFIELD_ROW0")
 playfield_block_struct row_zero; // 3840 bytes per row.  Hows 4 screens worth of data.
 #pragma bss-name (pop)

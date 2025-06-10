@@ -10,6 +10,7 @@
 #define PLAYER_BLANK (2048 - (PLAYER_HEIGHT * 5))
 #define PLAYER_LINE_MODE DMACTL_PMG_SINGLELINE
 
+// Types
 typedef struct {
     uint8_t blank[PLAYER_BLANK];
     uint8_t missile3210[PLAYER_HEIGHT];
@@ -18,5 +19,8 @@ typedef struct {
     uint8_t player2[PLAYER_HEIGHT];
     uint8_t player3[PLAYER_HEIGHT];
 } PlayerMissiles;
+
+void init_player_missiles();
+void disable_player_missiles();
 
 #endif // __PLAYER_GRAPHICS_H__
