@@ -6,9 +6,11 @@
 #include "player_missiles.h"
 #include "player_graphics_data.h"
 #include "memory.h"
+#include "console_keys.h"
 
 #include <atari.h>
 #include <conio.h>
+#include <joystick.h>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -47,7 +49,17 @@ uint16_t coord = 0;
 
 void wait_for_start_input()
 {
-    cgetc();
+    while(!kbhit() && !read_console_keys(CONSOLE_KEY_START)) // Wait for a key press
+    {
+        uint8_t joy_state = joy_read(JOY_1);
+        if(JOY_BTN_1(joy_state)) // If the joystick button 1 is pressed
+        {
+            break; // Exit the loop
+        }
+
+    }
+    if(kbhit()) // If a key was pressed
+        cgetc();  // Clear the key press
 }
 
 void show_logo_splash()
