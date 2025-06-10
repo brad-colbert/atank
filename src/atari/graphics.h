@@ -22,8 +22,9 @@ typedef struct {
     uint8_t color3; // = $02C7          1-byte playfield 3 color/luminance
     uint8_t color4; // = $02C8          1-byte background color/luminance
     uint8_t chbas;  // = $02F?          1-byte character base address
-    // 15 bytes total
-    uint8_t buffer[256-17];
+    uint8_t pmbase;
+    // 18 bytes total
+    uint8_t buffer[256-18];
 } graphics_state;
 
 void init_graphics();

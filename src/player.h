@@ -17,6 +17,7 @@
 typedef struct _Player {
     Point pos_prev;
     Point pos;
+    uint8_t direction_prev;
     uint8_t direction; // 0: up, 1: up-right, 2: right, 3: down-right, 4: down, 5: down-left, 6: left, 7: up-left
     uint8_t health;
     uint8_t armor;
@@ -25,5 +26,7 @@ typedef struct _Player {
 } Player;
 
 void init_player(int16_t x, int16_t y);
+
+void update_players(); // Define this for you platform
 
 #endif // __PLAYER_H__

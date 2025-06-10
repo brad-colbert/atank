@@ -120,12 +120,12 @@ void process_input()
     // Apply bounds checking to prevent the player from moving off-screen
     if (players[PLAYER_ONE].pos.x < (int16_t)0) {
         players[PLAYER_ONE].pos.x = (int16_t)0;
-    } else if (players[PLAYER_ONE].pos.x > (int16_t)(40*4*3-1)) {
-        players[PLAYER_ONE].pos.x = (int16_t)(40*4*3-1);
+    } else if (players[PLAYER_ONE].pos.x > (int16_t)(40 * 4 * 4 - 8)) {//  (731)) { //(40*8*3-1)) {
+        players[PLAYER_ONE].pos.x = (int16_t)(40 * 4 * 4 - 8); //(731); //(40*8*3-1);
     }
     if (players[PLAYER_ONE].pos.y < (int16_t)0) {
         players[PLAYER_ONE].pos.y = (int16_t)0;
-    } else if (players[PLAYER_ONE].pos.y > (int16_t)(24 * 8 * 3)) {
-        players[PLAYER_ONE].pos.y = (int16_t)(24 * 8 * 3);
+    } else if (players[PLAYER_ONE].pos.y > (int16_t)(24 * 8 * 4 - 8)) { //704 ) {//
+        players[PLAYER_ONE].pos.y = (int16_t)(24 * 8 * 4 - 8);
     }
 }

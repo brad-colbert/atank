@@ -6,7 +6,6 @@
 
 #include <conio.h>
 
-#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -20,7 +19,7 @@ void main(void)
     setup_input();
 
     // Initialize the player data
-    init_player(0, 0); // Starting position for player one
+    init_player(10, 10); // Starting position for player one
 
     // Initialize graphics
     init_graphics();
@@ -48,6 +47,4 @@ void main(void)
 
     // Restore the starting graphics mode
     shutdown_graphics();
-
-    cgetc();
 }
